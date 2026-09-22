@@ -1,0 +1,22 @@
+﻿ไฟล์สำหรับวางใน Google Apps Script — Contract Rental Hub v2.3.0
+สร้างเมื่อ 19/09/2026 18:30
+
+ใน Apps Script ต้องเหลือไฟล์แค่นี้ (ลบไฟล์ .gs อื่นทิ้งให้หมด ไม่งั้นจะ error ชื่อซ้ำ):
+  Code.gs          <- วางเนื้อหาจาก Code.gs ในโฟลเดอร์นี้
+  appsscript.json  <- วางเนื้อหาจาก appsscript.json (Project Settings > ติ๊ก Show appsscript.json)
+  EmailReminder.gs <- (ทางเลือก) ถ้าอยากใช้อีเมลแจ้งเตือนแบบไฟล์เดี่ยว
+
+ขั้นตอน
+  1. เปิดโปรเจกต์ที่ Deployment ID ขึ้นต้นด้วย AKfycbxnxR
+     (การทำให้ใช้งานได้ > จัดการการทำให้ใช้งานได้ เพื่อดู ID)
+  2. ลบไฟล์ .gs เก่าที่ไม่ใช่ 3 ไฟล์ข้างบน (คลิก ... ข้างชื่อไฟล์ > ลบ)
+  3. Code.gs: Ctrl+A > วาง > Ctrl+S
+  4. appsscript.json: Ctrl+A > วาง > Ctrl+S
+  5. เรียกใช้ setupSystem > อนุญาตสิทธิ์
+  6. อีเมลแจ้งเตือน: เรียกใช้ installNoticeTrigger (หรือ reminderInstall ถ้าใช้ EmailReminder.gs)
+  7. การทำให้ใช้งานได้ > จัดการการทำให้ใช้งานได้ > ดินสอ > เวอร์ชัน: เวอร์ชันใหม่ > ทำให้ใช้งานได้
+     ห้ามกด "เก็บถาวร" deployment AKfycbxnxR — URL ของหน้าเว็บจะใช้ไม่ได้
+
+ตรวจว่าสำเร็จ: เปิด
+  https://script.google.com/macros/s/AKfycbxnxRwEP7s4_UQQyF7JR4HwVE-aOidAWcMWRIqY8bo43BJG0KsrIDxSY29Yvi-GlUF6/exec?action=ping
+  ต้องเห็น "version":"2.3.0"

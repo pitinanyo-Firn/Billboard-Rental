@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="ระบบบริหารจัดการสัญญาเช่าพื้นที่สื่อโฆษณา — Plan B Media">
+<title>Plan B — Contract Rental Hub</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/ai.css">
+</head>
+<body>
+
+<!-- ============================================================
+     LOGIN
+     ============================================================ -->
+<div id="loginView">
+  <div class="login-card">
+    <div class="login-logo"><span class="mark">PB</span> Contract Rental Hub</div>
+    <div class="login-sub">ระบบบริหารจัดการสัญญาเช่าพื้นที่สื่อโฆษณา · Plan B Media</div>
+
+    <div id="loginError" class="alert-msg hidden"></div>
+
+    <div class="field">
+      <label for="email">Email</label>
+      <input id="email" type="email" autocomplete="username" placeholder="name@planb.co.th">
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <input id="password" type="password" autocomplete="current-password" placeholder="••••••••">
+    </div>
+
+    <button id="btnLogin" class="btn btn-primary">เข้าสู่ระบบ</button>
+    <div class="login-foot">สำหรับพนักงานที่ได้รับสิทธิ์เท่านั้น</div>
+  </div>
+</div>
+
+<!-- ============================================================
+     APP
+     ============================================================ -->
+<div id="appView" class="hidden">
+
+  <header class="topbar">
+    <span class="mark">PB</span>
+    <h1>Contract Rental Hub</h1>
+    <span class="meta" id="updatedAt"></span>
+    <button type="button" class="sync-pill" id="syncState" title="ซิงค์กับ Google Sheet"><i></i><span>ซิงค์กับ Google Sheet</span></button>
+    <div class="spacer"></div>
+    <button class="btn btn-ghost" id="btnRefresh">↻ รีเฟรช</button>
+    <button class="btn btn-ghost" id="btnExport">⬇ Export CSV</button>
+    <div class="user-chip">
+      <span class="avatar" id="avatar">U</span>
+      <span id="userName">-</span>
+    </div>
+    <button class="btn btn-ghost" id="btnLogout">ออกจากระบบ</button>
+  </header>
+
+  <nav class="tabs">
+    <div class="tab active" data-tab="dashboard">Dashboard</div>
+    <div class="tab" data-tab="contracts">ทะเบียนสัญญา</div>
+    <div class="tab" data-tab="action">รายการต้องดำเนินการ</div>
+    <div class="tab" data-tab="notice">หนังสือแจ้งเตือน</div>
+    <div class="tab" data-tab="ai">✦ ผู้ช่วย AI</div>
+    <div class="tab hidden" data-tab="members">สมาชิก</div>
+  </nav>
+
+  <main>
+
+    <!-- ---------- DASHBOARD ---------- -->
+    <section id="tab-dashboard">
+      <div class="kpi-grid" id="kpiGrid"></div>
+
+      <div class="chart-grid">
+        <div class="card">
+          <div class="card-head">
+            <h2>สัญญาที่จะหมดใน 12 เดือนข้างหน้า</h2>
+            <div class="spacer"></div>
+            <span class="cell-mute" id="expiringRange"></span>
+          </div>
+          <div class="table-wrap">
+            <table class="compact">
+              <thead><tr><th>ประเภทสื่อ</th><th class="num">จำนวน (สัญญา)</th></tr></thead>
+              <tbody id="expiringByMedia"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <h2>หนังสือแจ้งเตือนที่ใกล้ถึงกำหนด</h2>
+            <div class="spacer"></div>
+            <button class="btn btn-ghost btn-sm" id="btnGoNotice">ดูทั้งหมด →</button>
+          </div>
+          <div class="table-wrap">
+            <table class="compact">
+              <thead><tr><th>ต้องทำภายใน</th><th>Contract No.</th><th class="num">เหลือ (วัน)</th></tr></thead>
+              <tbody id="noticeSoon"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-grid">
+        <div class="card">
+          <div class="card-head"><h2>สัดส่วนตามสถานะสัญญา</h2></div>
+          <div class="chart-box"><canvas id="chStatus"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>จำนวนสัญญาตามประเภทสื่อ</h2></div>
+          <div class="chart-box"><canvas id="chMedia"></canvas></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>ไทม์ไลน์สัญญาหมดอายุ (12 เดือนข้างหน้า)</h2></div>
+        <div class="chart-box tall"><canvas id="chTimeline"></canvas></div>
+      </div>
+
+      <div class="chart-grid">
+        <div class="card">
+          <div class="card-head"><h2>จำนวนสัญญาตามบริษัท</h2></div>
+          <div class="chart-box"><canvas id="chCompany"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>จำนวนสัญญาตามจังหวัด (Top 8)</h2></div>
+          <div class="chart-box"><canvas id="chProvince"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- CONTRACTS ---------- -->
+    <section id="tab-contracts" class="hidden">
+      <div class="card">
+        <div class="filter-bar">
+          <input id="q" type="search" placeholder="ค้นหา: เลขที่สัญญา / คู่สัญญา / ทำเล / Code ป้าย">
+          <select id="fCompany"><option value="">ทุกบริษัท</option></select>
+          <select id="fMedia"><option value="">ทุกประเภทสื่อ</option></select>
+          <select id="fStatus"><option value="">ทุกสถานะ</option></select>
+          <select id="fProvince"><option value="">ทุกจังหวัด</option></select>
+          <select id="fAlert">
+            <option value="">ทุกระดับความเร่งด่วน</option>
+            <option value="critical">เลยกำหนดแจ้งต่อสัญญา</option>
+            <option value="warning">ใกล้หมดอายุ</option>
+            <option value="expired">หมดอายุแล้ว</option>
+            <option value="normal">ปกติ</option>
+            <option value="closed">ปิดสัญญา</option>
+          </select>
+          <button class="btn btn-ghost" id="btnResetFilter">ล้างตัวกรอง</button>
+        </div>
+
+        <div class="card-head">
+          <h2>ทะเบียนสัญญา</h2>
+          <div class="spacer"></div>
+          <span class="cell-mute" id="rowCount"></span>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>เลขที่สัญญา</th>
+                <th>บริษัท</th>
+                <th>ประเภทสื่อ</th>
+                <th>ทำเล / Media Site</th>
+                <th>คู่สัญญา</th>
+                <th>เริ่มต้น</th>
+                <th>สิ้นสุด</th>
+                <th class="num">คงเหลือ (วัน)</th>
+                <th>สถานะ</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- ACTION LIST ---------- -->
+    <section id="tab-action" class="hidden">
+      <div class="card">
+        <div class="card-head">
+          <h2>สัญญาที่ต้องดำเนินการภายใน 180 วัน</h2>
+          <div class="spacer"></div>
+          <span class="cell-mute">เรียงตามวันคงเหลือน้อยที่สุด</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ระดับ</th>
+                <th>เลขที่สัญญา</th>
+                <th>ทำเล / Media Site</th>
+                <th>คู่สัญญา</th>
+                <th>วันสิ้นสุด</th>
+                <th class="num">คงเหลือ (วัน)</th>
+                <th>ต้องแจ้งต่อสัญญาภายใน</th>
+                <th class="num">เหลือเวลาแจ้ง (วัน)</th>
+              </tr>
+            </thead>
+            <tbody id="actionBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- NOTICE LETTERS ---------- -->
+    <section id="tab-notice" class="hidden">
+      <div class="card notice-mail" id="noticeMail">
+        <div class="card-head">
+          <h2>แจ้งเตือนทางอีเมล</h2>
+          <div class="spacer"></div>
+          <span id="noticeMailBadge"></span>
+        </div>
+        <div class="cell-mute" id="noticeMailInfo">กำลังโหลด…</div>
+        <div class="notice-actions hidden" id="noticeAdmin">
+          <button class="btn btn-ghost" id="btnMailSelf">ส่งสรุปเดือนที่เลือกให้ฉัน (ทดสอบ)</button>
+          <button class="btn btn-ghost" id="btnMailAll">ส่งสรุปเดือนที่เลือกให้ผู้รับทั้งหมด</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>วันที่ต้องทำหนังสือแจ้งเตือน</h2>
+          <div class="spacer"></div>
+          <span class="cell-mute">คลิกแถวเพื่อดูรายการของเดือนนั้น</span>
+        </div>
+        <div class="table-wrap">
+          <table class="compact notice-months">
+            <thead>
+              <tr>
+                <th>เดือน/ปี</th>
+                <th class="num">จำนวนหนังสือต่อเดือนที่ต้องแจ้งต่อ</th>
+                <th>Contract No.</th>
+                <th>สถานะการส่งหนังสือ</th>
+                <th>สถานะสัญญา</th>
+              </tr>
+            </thead>
+            <tbody id="noticeBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2 id="noticeMonthTitle">รายละเอียด</h2>
+          <div class="spacer"></div>
+          <span class="cell-mute" id="noticeMonthCount"></span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ระดับ</th>
+                <th>Contract No.</th>
+                <th>ทำเล / Media Site</th>
+                <th>คู่สัญญา</th>
+                <th>ต้องทำหนังสือภายใน</th>
+                <th class="num">เหลือ (วัน)</th>
+                <th>สิ้นสุดสัญญา</th>
+                <th>สถานะการต่อสัญญา</th>
+                <th>สถานะเอกสาร</th>
+              </tr>
+            </thead>
+            <tbody id="noticeDetail"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- AI ASSISTANT ---------- -->
+    <section id="tab-ai" class="hidden">
+      <div class="card ai-card">
+        <div class="card-head">
+          <h2>✦ ผู้ช่วย AI — ถามเรื่องสัญญา</h2>
+          <div class="spacer"></div>
+          <button class="btn btn-ghost" id="btnAiClear">เริ่มบทสนทนาใหม่</button>
+        </div>
+
+        <div class="ai-log" id="aiLog">
+          <div class="ai-welcome" id="aiWelcome">
+            <p>ถามคำถามเกี่ยวกับสัญญาได้เลย AI จะตอบจากข้อมูลสัญญาในระบบ</p>
+            <div class="ai-chips" id="aiChips"></div>
+          </div>
+        </div>
+
+        <form class="ai-form" id="aiForm">
+          <textarea id="aiInput" rows="2" maxlength="2000"
+                    placeholder="เช่น สัญญาไหนต้องส่งหนังสือแจ้งต่อสัญญาภายในเดือนหน้าบ้าง"></textarea>
+          <button type="submit" class="btn btn-primary" id="btnAiSend">ส่ง</button>
+        </form>
+        <div class="ai-note">คำตอบสร้างโดย AI อาจคลาดเคลื่อน — ตรวจสอบกับเอกสารสัญญาก่อนใช้งานจริง</div>
+      </div>
+    </section>
+
+    <!-- ---------- MEMBERS (เฉพาะ admin) ---------- -->
+    <section id="tab-members" class="hidden">
+      <div class="card">
+        <div class="card-head">
+          <h2>เพิ่มสมาชิกใหม่</h2>
+          <div class="spacer"></div>
+          <span class="cell-mute">เฉพาะผู้ดูแลระบบ (admin)</span>
+        </div>
+
+        <div id="memberError" class="alert-msg hidden"></div>
+        <div id="memberResult" class="member-result hidden"></div>
+
+        <form id="memberForm">
+          <div class="form-grid">
+            <div class="field">
+              <label for="mName">ชื่อ - นามสกุล *</label>
+              <input id="mName" placeholder="เช่น สมชาย ใจดี">
+            </div>
+            <div class="field">
+              <label for="mPosition">ตำแหน่ง</label>
+              <input id="mPosition" placeholder="เช่น เจ้าหน้าที่การตลาด">
+            </div>
+            <div class="field">
+              <label for="mPhone">เบอร์โทร</label>
+              <input id="mPhone" type="tel" placeholder="0812345678">
+            </div>
+            <div class="field">
+              <label for="mEmail">E-mail *</label>
+              <input id="mEmail" type="email" placeholder="name@planb.co.th">
+            </div>
+            <div class="field">
+              <label for="mDepartment">แผนก</label>
+              <input id="mDepartment" placeholder="เช่น การตลาด">
+            </div>
+            <div class="field">
+              <label for="mRole">บทบาทและสิทธิ์การใช้งาน (Role)</label>
+              <select id="mRole">
+                <option value="viewer">Viewer — ดูข้อมูลอย่างเดียว</option>
+                <option value="admin">Admin — จัดการระบบเต็มสิทธิ์</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="mActive">สถานะบัญชี (Status)</label>
+              <select id="mActive">
+                <option value="true">ใช้งาน (Active)</option>
+                <option value="false">ปิดใช้งาน (Inactive)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="mPhoto">รูปผู้ใช้งาน</label>
+              <div class="photo-pick">
+                <span class="photo-preview" id="mPhotoPreview">+</span>
+                <input id="mPhoto" type="file" accept="image/*">
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" id="btnAddMember" style="width:auto;padding:12px 28px;">+ เพิ่มสมาชิก</button>
+        </form>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Detail drawer / loader / toast -->
+<div id="drawerHost"></div>
+<div id="loader" class="loader hidden"><div class="spinner"></div></div>
+<div id="toast" class="toast hidden"></div>
+
+<!-- ============================================================
+     SCRIPTS  (ลำดับสำคัญ — config → api → auth → มอดูล → app)
+     ============================================================ -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/contracts.js"></script>
+<script src="js/members.js"></script>
+<script src="js/editor.js"></script>
+<script src="js/notice.js"></script>
+<script src="js/sync.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

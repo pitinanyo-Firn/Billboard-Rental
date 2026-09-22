@@ -1,0 +1,10 @@
+# Netlify — ใช้เมื่อเชื่อม Netlify กับ GitHub repo (deploy อัตโนมัติทุกครั้งที่ push)
+# repo เดียวกันนี้ deploy ขึ้น GitHub Pages ได้ด้วย (.github/workflows/deploy-pages.yml) — เลือกใช้อย่างใดอย่างหนึ่งหรือทั้งคู่
+# ถ้า deploy แบบลากวาง (Netlify Drop) ให้ลากเฉพาะโฟลเดอร์ frontend/ — ไฟล์นี้จะไม่ถูกใช้
+# header ความปลอดภัยอยู่ใน frontend/_headers (ใช้ได้ทั้งสองแบบ)
+
+[build]
+  publish = "frontend"
+  command = ""          # static site ไม่ต้อง build
+
+# backend/ (Apps Script) ไม่ต้องขึ้น Netlify — deploy ผ่าน Apps Script editor
