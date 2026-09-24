@@ -1,0 +1,47 @@
+/* ============================================================
+   PLAN B — BILLBOARD RENTAL HUB  |  css/rental.css
+   ส่วนที่เพิ่มจาก Contract Rental Hub: จุดสถานะการจ่าย, ตรวจสอบข้อมูล, ฟอร์มบันทึกจ่าย
+   ============================================================ */
+
+/* ---------- ระดับการจ่าย ---------- */
+.d-overdue{background:#7F1D1D}
+.d-due3{background:var(--crit)}
+.d-soon{background:var(--warn)}
+.d-paid{background:var(--ok)}
+.d-expired{background:#7F1D1D}
+.d-warning{background:var(--warn)}
+
+.tab-count{
+  display:inline-block;min-width:20px;padding:0 6px;margin-left:4px;border-radius:99px;
+  background:var(--brand);color:#fff;font-size:11px;line-height:18px;text-align:center;
+}
+.tab-count:empty{display:none}
+
+/* ---------- ตรวจสอบข้อมูล ---------- */
+.lv{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11.5px;font-weight:700}
+.lv-high{background:#FEF2F2;color:#B91C1C}
+.lv-medium{background:#FFFBEB;color:#B45309}
+.lv-low{background:#F1F5F9;color:#475569}
+#qualityBody td{white-space:normal;vertical-align:top}
+#qualityBody td.msg{min-width:260px}
+.fix-to{font-weight:600;color:var(--ok)}
+.issue-list{list-style:none;display:grid;gap:6px}
+.issue-list li{display:flex;gap:8px;align-items:flex-start;font-size:13px}
+
+/* ---------- ฟอร์ม ---------- */
+.field.wide{grid-column:1/-1}
+.field input:disabled{background:var(--bg);color:var(--ink-2)}
+.check{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-2);cursor:pointer}
+.check input{width:16px;height:16px;accent-color:var(--brand)}
+.dup-tag{display:inline-block;margin-left:6px;padding:0 7px;border-radius:99px;background:#FFFBEB;color:#B45309;font-size:11px;font-weight:700}
+#receiptBody tr,#payBody tr{cursor:default}
+.rc-actions{display:flex;gap:6px;justify-content:flex-end}
+
+/* ---------- สมาชิก ---------- */
+.mini-avatar{width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:-6px;margin-right:7px}
+#memberBody tr{cursor:default}
+#memberBody .rc-actions{align-items:center}
+
+/* ---------- ยืนยันแก้อัตโนมัติ ---------- */
+.fix-preview{max-height:52vh;overflow:auto;margin:12px 0}
+.fix-preview td{white-space:normal}

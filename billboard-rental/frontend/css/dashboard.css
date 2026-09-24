@@ -1,0 +1,129 @@
+/* ============================================================
+   PLAN B — BILLBOARD RENTAL HUB  |  css/dashboard.css
+   KPI cards, charts, filters, data table, detail drawer, print
+   ============================================================ */
+
+/* ---------- 1. KPI ---------- */
+.kpi-grid{
+  display:grid;gap:14px;margin-bottom:20px;
+  grid-template-columns:repeat(auto-fit,minmax(178px,1fr));
+}
+.kpi{
+  background:var(--card);border-radius:var(--r);padding:16px 18px;
+  box-shadow:var(--shadow);border-left:4px solid var(--line);
+}
+.kpi .label{font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.2px}
+.kpi .value{font-size:28px;font-weight:800;letter-spacing:-1px;line-height:1.25;margin-top:2px}
+.kpi .foot{font-size:11.5px;color:var(--muted)}
+.kpi.k-total{border-left-color:var(--ink)}
+.kpi.k-active{border-left-color:var(--ok)}
+.kpi.k-new{border-left-color:var(--info)}
+.kpi.k-warn{border-left-color:var(--warn)}
+.kpi.k-crit{border-left-color:var(--crit)}
+.kpi.k-off{border-left-color:var(--off)}
+
+/* ---------- 2. Charts ---------- */
+.chart-grid{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(330px,1fr))}
+.chart-box{position:relative;height:270px}
+.chart-box.tall{height:300px}
+
+/* ---------- 3. Filters ---------- */
+.filter-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+.filter-bar input[type=search],.filter-bar select{
+  padding:9px 12px;border:1.5px solid var(--line);border-radius:var(--r-sm);
+  background:#fff;outline:none;min-width:150px;
+}
+.filter-bar input[type=search]{flex:1;min-width:230px}
+.filter-bar input:focus,.filter-bar select:focus{border-color:var(--brand)}
+
+/* ---------- 4. Table ---------- */
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r-sm)}
+table{width:100%;border-collapse:collapse;font-size:13px;white-space:nowrap}
+thead th{
+  background:#F8FAFC;text-align:left;font-weight:700;color:var(--ink-2);
+  padding:11px 12px;border-bottom:1.5px solid var(--line);
+  position:sticky;top:0;z-index:2;font-size:12px;
+}
+tbody td{padding:10px 12px;border-bottom:1px solid #F1F5F9;vertical-align:middle}
+tbody tr{cursor:pointer;transition:.12s}
+tbody tr:hover{background:#FFF5F6}
+tbody tr:last-child td{border-bottom:none}
+.cell-strong{font-weight:600}
+.cell-mute{color:var(--muted);font-size:12px}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.neg{color:#B91C1C;font-weight:600}
+
+/* ---------- 5. Badges & dots ---------- */
+.badge{
+  display:inline-block;padding:3px 9px;border-radius:99px;
+  font-size:11.5px;font-weight:700;line-height:1.5;
+}
+.b-ok{background:#ECFDF5;color:#047857}
+.b-info{background:#EFF6FF;color:#1D4ED8}
+.b-warn{background:#FFFBEB;color:#B45309}
+.b-crit{background:#FEF2F2;color:#B91C1C}
+.b-off{background:#F1F5F9;color:#475569}
+.b-led{background:#F5F3FF;color:#6D28D9}
+
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
+.d-normal{background:var(--ok)}
+.d-warning{background:var(--warn)}
+.d-critical{background:var(--crit)}
+.d-expired{background:#7F1D1D}
+.d-closed{background:var(--off)}
+.d-unknown{background:#CBD5E1}
+
+/* ---------- 6. Detail Drawer ---------- */
+.drawer-mask{
+  position:fixed;inset:0;background:rgba(15,23,42,.45);
+  z-index:60;display:flex;justify-content:flex-end;
+}
+.drawer{
+  width:min(720px,100%);height:100%;background:var(--bg);
+  overflow-y:auto;box-shadow:var(--shadow-lg);
+  animation:slide .22s ease-out;
+}
+@keyframes slide{from{transform:translateX(30px);opacity:.4}to{transform:none;opacity:1}}
+.drawer-head{
+  position:sticky;top:0;z-index:3;background:#fff;
+  border-bottom:1px solid var(--line);padding:16px 20px;
+  display:flex;align-items:flex-start;gap:12px;
+}
+.drawer-head h2{font-size:17px;font-weight:700;letter-spacing:-.3px}
+.drawer-head .sub{font-size:12.5px;color:var(--muted)}
+.drawer-body{padding:18px}
+
+.spec{
+  display:grid;grid-template-columns:170px 1fr;gap:1px;
+  background:var(--line);border-radius:var(--r-sm);overflow:hidden;
+}
+.spec dt{background:#F8FAFC;padding:10px 13px;font-weight:600;color:var(--ink-2);font-size:12.5px}
+.spec dd{background:#fff;padding:10px 13px;font-size:13px;word-break:break-word}
+
+.resp-grid{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(196px,1fr))}
+.resp-item{border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 12px;background:#fff}
+.resp-item .k{font-size:11.5px;color:var(--muted);font-weight:600}
+.resp-item .v{font-weight:700;font-size:13.5px;margin-top:1px}
+.v-company{color:var(--brand)}
+.v-partner{color:var(--info)}
+.v-none{color:var(--muted)}
+
+.timeline-bar{height:9px;background:var(--line);border-radius:99px;overflow:hidden;margin:10px 0 6px}
+.timeline-fill{height:100%;border-radius:99px;transition:width .4s}
+.notice-line{margin-top:8px;font-weight:700}
+
+/* ---------- 7. Responsive ---------- */
+@media (max-width:820px){
+  .kpi .value{font-size:24px}
+  .spec{grid-template-columns:1fr}
+  .spec dt{padding-bottom:2px}
+}
+
+/* ---------- 8. Print (พิมพ์รายละเอียดสัญญาเป็นเอกสารแนบ) ---------- */
+@media print{
+  .topbar,.tabs,.filter-bar,.icon-btn,.btn,.kpi-grid,.chart-grid{display:none !important}
+  .drawer-mask{position:static;background:none;display:block}
+  .drawer{width:100%;height:auto;box-shadow:none;animation:none;overflow:visible}
+  body{background:#fff}
+  .card{box-shadow:none;border:1px solid var(--line);break-inside:avoid}
+}
