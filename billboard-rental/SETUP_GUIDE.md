@@ -1,3 +1,6 @@
+> **สถานะปัจจุบัน:** ติดตั้งและ deploy เรียบร้อยแล้ว — เว็บ https://billboard-rental-5igo.vercel.app/ · Apps Script Version 47 · ล็อกอิน `admin-rental` / `P@ssword`
+> คู่มือนี้ใช้เมื่อย้ายไปชีต/โปรเจกต์ใหม่ หรือกู้ระบบ
+
 # SETUP_GUIDE.md — ติดตั้ง Billboard Rental Hub
 
 ## 1. Backend (Google Apps Script)

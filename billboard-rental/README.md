@@ -13,6 +13,18 @@
 
 ---
 
+## ระบบที่ใช้งานจริง (deploy แล้ว)
+
+| ส่วน | ลิงก์ |
+|---|---|
+| **หน้าเว็บ (Vercel)** | https://billboard-rental-5igo.vercel.app/ |
+| **Web app API** | https://script.google.com/macros/s/AKfycbyPAZq-VdvGBxH8CfoXKqDKvh8t6oLdWtTOuXFPl2VL0CZqYqQifyzjyzW7Ib5-ETXRrg/exec |
+| **Apps Script** | [Billboard Rental](https://script.google.com/home/projects/1-6nGq5g24XJjqjqgTfWYgiQyLfzQyvVxeLUZuaBXVlqh1vG6XymqgZVS/edit) · Version 47 |
+| **ผู้ดูแลระบบ** | `admin-rental` / `P@ssword` — เปลี่ยนรหัสหลังเข้าใช้ครั้งแรก |
+
+ยังไม่ได้เปิด: อีเมลแจ้งเตือนอัตโนมัติ (รัน `installAlertTrigger` ใน Apps Script) · ผู้ช่วย AI (ต้องตั้ง Script property `ANTHROPIC_API_KEY`)
+
+---
 ## Architecture
 
 ```
