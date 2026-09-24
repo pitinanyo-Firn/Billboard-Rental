@@ -1,0 +1,26 @@
+# clasp
+.clasp.json
+.clasprc.json
+
+# node
+node_modules/
+package-lock.json
+
+# backend build output (สร้างจาก backend\build.ps1)
+backend/dist/
+
+# ไฟล์ที่สร้างจาก tools/prepare-upload.ps1 / ข้อมูลจริง — ห้ามขึ้น GitHub
+_upload/
+*.xlsx
+*.csv
+
+# local
+*.log
+.env
+.vercel
+.DS_Store
+Thumbs.db
+
+# editor
+.vscode/
+.idea/
