@@ -13,18 +13,19 @@ const Due = {
     $('btnMailAll').addEventListener('click', () => this.sendNow(false));
   },
 
-  /** รายการที่ต้องจ่าย: เลยกำหนด + ภายใน dueSoonDays วัน เรียงตามวันที่ */
+  /** งวดที่ต้องจ่าย: เลยกำหนด + ภายใน dueSoonDays วัน เรียงตามวันที่
+      (1 งวด = แถวรายเดือนที่ใช้วันชำระเดียวกัน — ราย 3 เดือน/รายปี ถูกรวมให้แล้วจาก backend) */
   rows() {
     if (!Store.data) return [];
     const lim = Store.data.dueSoonDays;
-    return Store.data.rentals
-      .filter(d => d.payDate && (d.payAlert === 'overdue' || (d.daysToPay >= 0 && d.daysToPay <= lim)))
+    return (Store.data.payGroups || [])
+      .filter(g => g.payAlert === 'overdue' || (g.daysToPay >= 0 && g.daysToPay <= lim))
       .sort((a, b) => a.daysToPay - b.daysToPay);
   },
 
   render() {
     const rows = this.rows();
-    const total = rows.reduce((s, d) => s + d.installment, 0);
+    const total = rows.reduce((s, d) => s + d.amount, 0);
     const overdue = rows.filter(d => d.payAlert === 'overdue').length;
     $('cntDue').textContent = rows.length || '';
     $('dueTitle').textContent = `ครบกำหนดจ่าย — เลยกำหนด ${overdue} · ภายใน ${Store.data.dueSoonDays} วัน ${rows.length - overdue}`;
@@ -42,8 +43,8 @@ const Due = {
           <td>${esc(d.vendorName)}</td>
           <td>${esc(d.mediaSite)}</td>
           <td>${esc(d.contractNo || '-')}</td>
-          <td>${esc(d.payment)}</td>
-          <td class="num">${fmtMoney(d.installment)}</td>
+          <td>${esc(d.payment)}<div class="cell-mute">${esc(d.months.length > 1 ? `${d.months[0]} – ${d.months[d.months.length - 1]}` : d.months[0] || '')}</div></td>
+          <td class="num">${fmtMoney(d.amount)}</td>
           <td>${statusBadge(d.payStatus)}</td>
         </tr>`).join('');
       tb.querySelectorAll('tr[data-id]').forEach(tr => {

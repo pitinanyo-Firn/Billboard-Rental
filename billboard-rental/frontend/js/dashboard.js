@@ -44,7 +44,7 @@ const Dashboard = {
         <td>${alertDot(d.payAlert)}${fmtDate(d.payDate)}
           <div class="cell-mute">${d.daysToPay < 0 ? `<span class="neg">เลยมา ${-d.daysToPay} วัน</span>` : d.daysToPay === 0 ? 'วันนี้' : `อีก ${d.daysToPay} วัน`}</div></td>
         <td class="cell-strong">${esc(d.vendorName || '-')}<div class="cell-mute">${esc(d.mediaSite)}</div></td>
-        <td class="num">${fmtMoney(d.installment)}</td>
+        <td class="num">${fmtMoney(d.amount)}</td>
       </tr>`).join('');
     tb.querySelectorAll('tr[data-id]').forEach(tr => {
       tr.addEventListener('click', () => Rentals.openDetail(tr.dataset.id));
@@ -55,14 +55,14 @@ const Dashboard = {
   renderKPI() {
     const k = Store.data.kpi;
     const cards = [
-      ['k-total',  'รายการค่าเช่า',          fmtNum(k.total),        `${fmtNum(k.contracts)} สัญญา`],
-      ['k-total',  'ค่าเช่าเฉลี่ยต่อเดือน',   fmtNum(k.monthlyCost),  'บาท (ประมาณการ)'],
-      ['k-new',    'ค่าเช่าต่อปี',            fmtNum(k.annualCost),   'บาท (ประมาณการ)'],
-      ['k-active', 'เบิกแล้ว',               fmtNum(k.paid),         'Status Payment'],
-      ['k-warn',   'รอเบิก',                 fmtNum(k.waiting),      'Status Payment'],
-      ['k-crit',   'เลยกำหนดจ่าย',           fmtNum(k.overdue),      'ยังไม่เบิก'],
-      ['k-warn',   'ครบกำหนดใน ' + Store.data.dueSoonDays + ' วัน', fmtNum(k.dueSoon), 'รวมเช็คที่รอจ่าย'],
-      ['k-warn',   'สัญญาใกล้หมดอายุ',        fmtNum(k.expiring),     `ภายใน ${Store.data.expireDays} วัน`],
+      ['k-total',  'รายการค่าเช่า',          fmtNum(k.total),        `${fmtNum(k.contracts)} สัญญา · ${fmtNum(k.rows)} แถวรายเดือน`],
+      ['k-total',  'ค่าเช่าต่อเดือน',         fmtNum(k.monthlyCost),  k.monthLabel ? `บาท · รอบ ${k.monthLabel}` : 'บาท (เฉลี่ยทั้งปี)'],
+      ['k-new',    'ค่าเช่าต่อปี',            fmtNum(k.annualCost),   'บาท (รวมทั้งปีตามชีต)'],
+      ['k-active', 'เบิกแล้ว',               fmtNum(k.paid),         'แถวรายเดือน'],
+      ['k-warn',   'รอเบิก',                 fmtNum(k.waiting),      'แถวรายเดือน'],
+      ['k-crit',   'เลยกำหนดจ่าย',           fmtNum(k.overdue),      'งวดที่ยังไม่เบิก'],
+      ['k-warn',   'ครบกำหนดใน ' + Store.data.dueSoonDays + ' วัน', fmtNum(k.dueSoon), `${fmtMoney(k.dueAmount)} บาท รวมที่เลยกำหนด`],
+      ['k-warn',   'สัญญาใกล้หมดอายุ',        fmtNum(k.expiring),     `รายการ · ภายใน ${Store.data.expireDays} วัน`],
       ['k-off',    'ใบเสร็จที่ยังไม่ได้รับ',   fmtNum(k.receiptWait),  'Receipt_Tracking'],
       ['k-crit',   'ข้อมูลที่ต้องตรวจ',        fmtNum(k.issues),       'แถวใน Contract_Master']
     ];

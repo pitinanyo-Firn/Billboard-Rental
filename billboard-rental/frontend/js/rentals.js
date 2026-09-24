@@ -100,8 +100,8 @@ const Rentals = {
         <td>${esc(d.vendorName)}<div class="cell-mute">${esc(d.company)} · ${esc(d.rent)}</div></td>
         <td>${esc(d.mediaType)}</td>
         <td>${esc(d.mediaSite)}</td>
-        <td>${esc(d.payment)}</td>
-        <td class="num">${fmtMoney(d.installment)}</td>
+        <td>${esc(d.payment)}<div class="cell-mute">${esc(d.month)}</div></td>
+        <td class="num">${fmtMoney(d.monthlyCost)}</td>
         <td>${fmtDate(d.dueDate)}</td>
         <td class="num">${d.payKind === 'due' ? fmtDays(d.daysToPay) : '-'}</td>
         <td>${statusBadge(d.payStatus)}</td>
@@ -119,7 +119,7 @@ const Rentals = {
      ---------------------------------------------------------- */
   async openDetail(id) {
     const r = await apiGuarded('getRental', { id });
-    if (r) this.drawDetail(r.rental, r.payments, r.receipts);
+    if (r) this.drawDetail(r.rental, r.payments, r.receipts, r.cycles || []);
   },
 
   closeDetail() {
@@ -129,7 +129,7 @@ const Rentals = {
     $('drawerHost').innerHTML = '';
   },
 
-  drawDetail(d, payments, receipts) {
+  drawDetail(d, payments, receipts, cycles = []) {
     // แถบความคืบหน้าอายุสัญญา
     let pct = 0;
     if (d.startDate && d.endDate) {
@@ -182,8 +182,8 @@ const Rentals = {
               ${row('Amount/Month', fmtMoney(d.amountMonth))}
               ${row('Amount/Year', fmtMoney(d.amountYear))}
               ${row('Up or CN', d.adjust ? fmtMoney(d.adjust) : '')}
-              ${row('ยอดต่องวด', fmtMoney(d.installment) + ' บาท')}
-              ${row('ประมาณการต่อปี', fmtMoney(d.annualCost) + ' บาท')}
+              ${row('ค่าเช่าเดือนนี้', fmtMoney(d.installment) + ' บาท')}
+              ${row('ค่าเช่าต่อปี', fmtMoney(d.annualCost) + ' บาท')}
               ${dateRow('ว/ด/ป ชำระตามสัญญา', 'dueDate')}
               ${row('รอบการจ่าย', (d.periodStart || d.periodEnd) ? fmtDate(d.periodStart) + ' – ' + fmtDate(d.periodEnd) : '')}
               ${row('รอบจ่ายตามเอกสาร', d.docPeriod)}
@@ -231,6 +231,24 @@ const Rentals = {
             </dl>
           </div>
 
+          ${cycles.length > 1 ? `
+          <div class="card">
+            <div class="card-head"><h2>รอบรายเดือนของรายการนี้ (${cycles.length})</h2><div class="spacer"></div>
+              <span class="cell-mute">คลิกแถวเพื่อเปิดรอบนั้น</span></div>
+            <div class="table-wrap"><table class="compact">
+              <thead><tr><th>รอบ</th><th>ชำระตามสัญญา</th><th>เช็คลงวันที่</th><th class="num">ยอด (บาท)</th><th>Status Payment</th><th>MEMO/INV · ECM</th></tr></thead>
+              <tbody>${cycles.map(c => `
+                <tr data-cycle="${c.id}" class="clickable ${c.id === d.id ? 'sel' : ''}">
+                  <td class="cell-strong">${esc(c.month || '-')}${c.issues ? ' <span class="lv lv-medium" title="มีปัญหาข้อมูล">!</span>' : ''}</td>
+                  <td>${fmtDate(c.dueDate)}</td>
+                  <td>${fmtDate(c.chequeDate)}</td>
+                  <td class="num">${fmtMoney(c.installment)}</td>
+                  <td>${statusBadge(c.payStatus)}</td>
+                  <td class="cell-mute">${esc([c.memoInv, c.ecmNo].filter(Boolean).join(' · ') || '-')}</td>
+                </tr>`).join('')}</tbody>
+            </table></div>
+          </div>` : ''}
+
           <div class="card">
             <div class="card-head"><h2>ประวัติการเบิกจ่าย (${payments.length})</h2></div>
             ${payments.length ? `<div class="table-wrap"><table class="compact">
@@ -245,6 +263,9 @@ const Rentals = {
       </div>
     </div>`;
 
+    document.querySelectorAll('tr[data-cycle]').forEach(tr => {
+      tr.addEventListener('click', () => { if (tr.dataset.cycle !== d.id) this.openDetail(tr.dataset.cycle); });
+    });
     $('btnCloseDetail').addEventListener('click', () => this.closeDetail());
     $('btnPrintDetail').addEventListener('click', () => window.print());
     if ($('btnEditDetail')) $('btnEditDetail').addEventListener('click', () => Editor.open(d));
