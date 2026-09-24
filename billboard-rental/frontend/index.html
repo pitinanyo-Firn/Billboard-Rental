@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="ระบบติดตามค่าเช่าป้ายโฆษณาและการเบิกจ่าย — Plan B Media">
+<title>Plan B — Billboard Rental Hub</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/ai.css">
+<link rel="stylesheet" href="css/rental.css">
+</head>
+<body>
+
+<!-- ============================================================
+     LOGIN
+     ============================================================ -->
+<div id="loginView">
+  <div class="login-card">
+    <div class="login-logo"><span class="mark">PB</span> Billboard Rental Hub</div>
+    <div class="login-sub">ระบบติดตามค่าเช่าป้ายโฆษณาและการเบิกจ่าย · Plan B Media</div>
+
+    <div id="loginError" class="alert-msg hidden"></div>
+
+    <div class="field">
+      <label for="email">Email หรือชื่อผู้ใช้</label>
+      <input id="email" autocomplete="username" placeholder="admin-rental หรือ name@planbmedia.co.th">
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <input id="password" type="password" autocomplete="current-password" placeholder="••••••••">
+    </div>
+
+    <button id="btnLogin" class="btn btn-primary">เข้าสู่ระบบ</button>
+    <div class="login-foot">สำหรับพนักงานที่ได้รับสิทธิ์เท่านั้น</div>
+  </div>
+</div>
+
+<!-- ============================================================
+     APP
+     ============================================================ -->
+<div id="appView" class="hidden">
+
+  <header class="topbar">
+    <span class="mark">PB</span>
+    <h1>Billboard Rental Hub</h1>
+    <span class="meta" id="updatedAt"></span>
+    <button type="button" class="sync-pill" id="syncState" title="ซิงค์กับ Google Sheet"><i></i><span>ซิงค์กับ Google Sheet</span></button>
+    <div class="spacer"></div>
+    <button class="btn btn-ghost" id="btnRefresh">↻ รีเฟรช</button>
+    <button class="btn btn-ghost" id="btnExport">⬇ Export CSV</button>
+    <div class="user-chip">
+      <span class="avatar" id="avatar">U</span>
+      <span id="userName">-</span>
+    </div>
+    <button class="btn btn-ghost" id="btnLogout">ออกจากระบบ</button>
+  </header>
+
+  <nav class="tabs">
+    <div class="tab active" data-tab="dashboard">Dashboard</div>
+    <div class="tab" data-tab="rentals">ทะเบียนค่าเช่า</div>
+    <div class="tab" data-tab="due">ครบกำหนดจ่าย <span class="tab-count" id="cntDue"></span></div>
+    <div class="tab" data-tab="payments">บันทึกจ่าย / ใบเสร็จ</div>
+    <div class="tab" data-tab="quality">ตรวจสอบข้อมูล <span class="tab-count" id="cntIssues"></span></div>
+    <div class="tab" data-tab="ai">✦ ผู้ช่วย AI</div>
+    <div class="tab hidden" data-tab="members">สมาชิก</div>
+  </nav>
+
+  <main>
+
+    <!-- ---------- DASHBOARD ---------- -->
+    <section id="tab-dashboard">
+      <div class="kpi-grid" id="kpiGrid"></div>
+
+      <div class="chart-grid">
+        <div class="card">
+          <div class="card-head">
+            <h2>ค่าเช่าต่อปีตามประเภทสื่อ</h2>
+            <div class="spacer"></div>
+            <span class="cell-mute">ประมาณการ (บาท)</span>
+          </div>
+          <div class="table-wrap">
+            <table class="compact">
+              <thead><tr><th>ประเภทสื่อ</th><th class="num">รายการ</th><th class="num">เบิกแล้ว / รอเบิก</th><th class="num">ค่าเช่าต่อปี (บาท)</th></tr></thead>
+              <tbody id="costByMedia"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <h2>ครบกำหนดจ่ายเร็ว ๆ นี้</h2>
+            <div class="spacer"></div>
+            <button class="btn btn-ghost btn-sm" id="btnGoDue">ดูทั้งหมด →</button>
+          </div>
+          <div class="table-wrap">
+            <table class="compact">
+              <thead><tr><th>วันที่ต้องจ่าย</th><th>ผู้รับเงิน / Media Site</th><th class="num">ยอด (บาท)</th></tr></thead>
+              <tbody id="dueSoon"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>ประมาณการค่าเช่าที่ต้องจ่าย 12 เดือนข้างหน้า</h2><div class="spacer"></div><span class="cell-mute">ตามความถี่การจ่ายและวันสิ้นสุดสัญญา</span></div>
+        <div class="chart-box tall"><canvas id="chForecast"></canvas></div>
+      </div>
+
+      <div class="chart-grid">
+        <div class="card">
+          <div class="card-head"><h2>สถานะการเบิกตามประเภทสื่อ</h2></div>
+          <div class="chart-box"><canvas id="chStatus"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>ค่าเช่าต่อปีตามบริษัท</h2></div>
+          <div class="chart-box"><canvas id="chCompany"></canvas></div>
+        </div>
+      </div>
+
+      <div class="chart-grid">
+        <div class="card">
+          <div class="card-head"><h2>External vs Inter-Co (ค่าเช่าต่อปี)</h2></div>
+          <div class="chart-box"><canvas id="chRent"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>สัญญาหมดอายุ 12 เดือนข้างหน้า</h2></div>
+          <div class="chart-box"><canvas id="chExpiry"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- RENTALS ---------- -->
+    <section id="tab-rentals" class="hidden">
+      <div class="card">
+        <div class="filter-bar">
+          <input id="q" type="search" placeholder="ค้นหา: เลขที่สัญญา / ผู้รับเงิน / Media Site / PR / PO / Epicore Code">
+          <select id="fCompany"><option value="">ทุกบริษัท</option></select>
+          <select id="fMedia"><option value="">ทุกประเภทสื่อ</option></select>
+          <select id="fPayment"><option value="">ทุกรูปแบบการจ่าย</option></select>
+          <select id="fStatus"><option value="">ทุก Status Payment</option></select>
+          <select id="fRent"><option value="">External + Inter-Co</option></select>
+          <select id="fAlert">
+            <option value="">ทุกระดับ</option>
+            <option value="overdue">เลยกำหนดจ่าย</option>
+            <option value="due3">ภายใน 3 วัน</option>
+            <option value="soon">ใกล้ครบกำหนด</option>
+            <option value="normal">ยังไม่ถึงกำหนด</option>
+            <option value="paid">เบิกแล้ว</option>
+            <option value="unknown">ไม่ระบุวันที่</option>
+          </select>
+          <button class="btn btn-ghost" id="btnResetFilter">ล้างตัวกรอง</button>
+        </div>
+
+        <div class="card-head">
+          <h2>ทะเบียนค่าเช่า</h2>
+          <div class="spacer"></div>
+          <span class="cell-mute" id="rowCount"></span>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>เลขที่สัญญา</th>
+                <th>ผู้รับเงิน (Vendor)</th>
+                <th>ประเภทสื่อ</th>
+                <th>Media Site</th>
+                <th>การจ่าย</th>
+                <th class="num">ยอดต่องวด (บาท)</th>
+                <th>ชำระตามสัญญา</th>
+                <th class="num">เหลือ (วัน)</th>
+                <th>Status Payment</th>
+                <th>สิ้นสุดสัญญา</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- DUE ---------- -->
+    <section id="tab-due" class="hidden">
+      <div class="card notice-mail">
+        <div class="card-head">
+          <h2>แจ้งเตือนทางอีเมล</h2>
+          <div class="spacer"></div>
+          <span id="alertBadge"></span>
+        </div>
+        <div class="cell-mute" id="alertInfo">กำลังโหลด…</div>
+        <div class="notice-actions hidden" id="alertAdmin">
+          <button class="btn btn-ghost" id="btnMailSelf">ส่งสรุปรายการครบกำหนดให้ฉัน (ทดสอบ)</button>
+          <button class="btn btn-ghost" id="btnMailAll">ส่งสรุปให้ผู้รับทั้งหมด</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2 id="dueTitle">ครบกำหนดจ่าย</h2>
+          <div class="spacer"></div>
+          <span class="cell-mute" id="dueTotal"></span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ระดับ</th>
+                <th>วันที่ต้องจ่าย</th>
+                <th class="num">เหลือ (วัน)</th>
+                <th>ผู้รับเงิน (Vendor)</th>
+                <th>Media Site</th>
+                <th>เลขที่สัญญา</th>
+                <th>การจ่าย</th>
+                <th class="num">ยอดต่องวด (บาท)</th>
+                <th>Status Payment</th>
+              </tr>
+            </thead>
+            <tbody id="dueBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- PAYMENTS / RECEIPTS ---------- -->
+    <section id="tab-payments" class="hidden">
+      <div class="card hidden" id="payFormCard">
+        <div class="card-head">
+          <h2>บันทึกการเบิกจ่าย</h2>
+          <div class="spacer"></div>
+          <span class="cell-mute">บันทึกลง Payment_History และเพิ่มรายการติดตามใบเสร็จอัตโนมัติ</span>
+        </div>
+        <div id="payError" class="alert-msg hidden"></div>
+        <form id="payForm" novalidate>
+          <div class="form-grid">
+            <div class="field wide">
+              <label for="pRental">รายการค่าเช่า *</label>
+              <input id="pRental" list="dlRentals" placeholder="พิมพ์ค้นหา ผู้รับเงิน / Media Site / เลขที่สัญญา">
+              <datalist id="dlRentals"></datalist>
+            </div>
+            <div class="field">
+              <label for="pMonth">รอบดิว *</label>
+              <input id="pMonth" type="month">
+            </div>
+            <div class="field">
+              <label for="pExpected">ยอดที่ต้องจ่าย (บาท)</label>
+              <input id="pExpected" disabled>
+            </div>
+            <div class="field">
+              <label for="pActual">ยอดที่จ่ายจริง (บาท) *</label>
+              <input id="pActual" type="number" min="0" step="0.01">
+            </div>
+            <div class="field">
+              <label for="pRemark">หมายเหตุ</label>
+              <input id="pRemark" maxlength="300">
+            </div>
+          </div>
+          <label class="check"><input type="checkbox" id="pMarkPaid"> เปลี่ยน Status Payment ใน Contract_Master เป็น "เบิกแล้ว"</label>
+          <button type="submit" class="btn btn-primary" id="btnPay" style="width:auto;padding:12px 28px;margin-top:14px;">บันทึกการเบิกจ่าย</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>ติดตามใบเสร็จ</h2>
+          <div class="spacer"></div>
+          <select id="fReceipt" class="st-select"><option value="">ทุกสถานะ</option></select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>วันที่บันทึก</th><th>ผู้รับเงิน (Vendor)</th><th>Media Site</th><th class="num">ยอดเงิน (บาท)</th><th>สถานะใบเสร็จ</th><th></th></tr></thead>
+            <tbody id="receiptBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>ประวัติการเบิกจ่าย</h2>
+          <div class="spacer"></div>
+          <span class="cell-mute" id="payCount"></span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>วันที่บันทึก</th><th>ผู้รับเงิน (Vendor)</th><th>Media Site</th><th>รอบดิว</th><th class="num">ยอดที่ต้องจ่าย</th><th class="num">ยอดที่จ่ายจริง</th><th class="num">ส่วนต่าง</th><th>หมายเหตุ</th></tr></thead>
+            <tbody id="payBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- DATA QUALITY ---------- -->
+    <section id="tab-quality" class="hidden">
+      <div class="card">
+        <div class="card-head">
+          <h2>ตรวจสอบข้อมูลใน Contract_Master</h2>
+          <div class="spacer"></div>
+          <button class="btn btn-primary btn-sm hidden" id="btnAutoFix" style="width:auto">แก้อัตโนมัติ…</button>
+        </div>
+        <div class="kpi-grid" id="qualityKpi"></div>
+        <div class="cell-mute">
+          แก้อัตโนมัติได้: วันที่ที่เขียนเป็น เดือน/วัน/ปี · คำสะกดผิด · ช่องว่างเกิน —
+          ปัญหาอื่นต้องตรวจกับเอกสารแล้วแก้เองผ่าน ✎ แก้ไข (คลิกแถว)
+        </div>
+      </div>
+      <div class="card">
+        <div class="filter-bar">
+          <select id="fLevel">
+            <option value="">ทุกระดับ</option>
+            <option value="high">สำคัญ</option>
+            <option value="medium">ควรตรวจ</option>
+            <option value="low">เล็กน้อย</option>
+          </select>
+          <label class="check"><input type="checkbox" id="fFixable"> เฉพาะที่แก้อัตโนมัติได้</label>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ระดับ</th><th>แถวในชีต</th><th>เลขที่สัญญา</th><th>ผู้รับเงิน / Media Site</th><th>คอลัมน์</th><th>ปัญหา</th><th>แก้เป็น</th></tr></thead>
+            <tbody id="qualityBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- AI ASSISTANT ---------- -->
+    <section id="tab-ai" class="hidden">
+      <div class="card ai-card">
+        <div class="card-head">
+          <h2>✦ ผู้ช่วย AI — ถามเรื่องค่าเช่า / การเบิกจ่าย</h2>
+          <div class="spacer"></div>
+          <button class="btn btn-ghost" id="btnAiClear">เริ่มบทสนทนาใหม่</button>
+        </div>
+
+        <div class="ai-log" id="aiLog">
+          <div class="ai-welcome" id="aiWelcome">
+            <p>ถามคำถามเกี่ยวกับค่าเช่าได้เลย AI จะตอบจากข้อมูลในระบบ</p>
+            <div class="ai-chips" id="aiChips"></div>
+          </div>
+        </div>
+
+        <form class="ai-form" id="aiForm">
+          <textarea id="aiInput" rows="2" maxlength="2000"
+                    placeholder="เช่น เดือนหน้าต้องเตรียมเงินจ่ายค่าเช่ารวมเท่าไหร่"></textarea>
+          <button type="submit" class="btn btn-primary" id="btnAiSend">ส่ง</button>
+        </form>
+        <div class="ai-note">คำตอบสร้างโดย AI อาจคลาดเคลื่อน — ตรวจสอบกับเอกสารก่อนใช้งานจริง</div>
+      </div>
+    </section>
+
+    <!-- ---------- MEMBERS (เฉพาะ admin) ---------- -->
+    <section id="tab-members" class="hidden">
+      <div class="card">
+        <div class="card-head">
+          <h2>เพิ่มสมาชิกใหม่</h2>
+          <div class="spacer"></div>
+          <span class="cell-mute">เฉพาะผู้ดูแลระบบ (admin)</span>
+        </div>
+
+        <div id="memberError" class="alert-msg hidden"></div>
+        <div id="memberResult" class="member-result hidden"></div>
+
+        <form id="memberForm">
+          <div class="form-grid">
+            <div class="field">
+              <label for="mName">ชื่อ - นามสกุล *</label>
+              <input id="mName" placeholder="เช่น สมชาย ใจดี">
+            </div>
+            <div class="field">
+              <label for="mPosition">ตำแหน่ง</label>
+              <input id="mPosition" placeholder="เช่น เจ้าหน้าที่บัญชี">
+            </div>
+            <div class="field">
+              <label for="mPhone">เบอร์โทร</label>
+              <input id="mPhone" type="tel" placeholder="0812345678">
+            </div>
+            <div class="field">
+              <label for="mEmail">E-mail หรือชื่อผู้ใช้ *</label>
+              <input id="mEmail" placeholder="name@planbmedia.co.th หรือ user-rental">
+            </div>
+            <div class="field">
+              <label for="mPassword">รหัสผ่าน</label>
+              <input id="mPassword" type="password" autocomplete="new-password" placeholder="เว้นว่าง = สุ่มรหัสชั่วคราวให้">
+            </div>
+            <div class="field">
+              <label for="mDepartment">แผนก</label>
+              <input id="mDepartment" placeholder="เช่น บัญชี">
+            </div>
+            <div class="field">
+              <label for="mRole">บทบาทและสิทธิ์การใช้งาน (Role)</label>
+              <select id="mRole">
+                <option value="viewer">Viewer — ดูข้อมูลอย่างเดียว</option>
+                <option value="admin">Admin — จัดการระบบเต็มสิทธิ์</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="mActive">สถานะบัญชี (Status)</label>
+              <select id="mActive">
+                <option value="true">ใช้งาน (Active)</option>
+                <option value="false">ปิดใช้งาน (Inactive)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="mPhoto">รูปผู้ใช้งาน</label>
+              <div class="photo-pick">
+                <span class="photo-preview" id="mPhotoPreview">+</span>
+                <input id="mPhoto" type="file" accept="image/*">
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" id="btnAddMember" style="width:auto;padding:12px 28px;">+ เพิ่มสมาชิก</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>รายชื่อสมาชิก</h2>
+          <div class="spacer"></div>
+          <span class="cell-mute" id="memberCount"></span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ชื่อ / ผู้ใช้</th>
+                <th>ตำแหน่ง / แผนก</th>
+                <th>เบอร์โทร</th>
+                <th>สิทธิ์ (Role)</th>
+                <th>สถานะ</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="memberBody"></tbody>
+          </table>
+        </div>
+        <div class="cell-mute" style="margin-top:10px">
+          เปลี่ยนสิทธิ์/สถานะแล้วบันทึกลงชีต Users ทันที · ระบบกันไม่ให้ลบหรือปิดบัญชีตัวเอง และต้องเหลือ admin ที่ใช้งานอยู่อย่างน้อย 1 คน
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Detail drawer / loader / toast -->
+<div id="drawerHost"></div>
+<div id="loader" class="loader hidden"><div class="spinner"></div></div>
+<div id="toast" class="toast hidden"></div>
+
+<!-- ============================================================
+     SCRIPTS  (ลำดับสำคัญ — config → api → auth → มอดูล → app)
+     ============================================================ -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/rentals.js"></script>
+<script src="js/editor.js"></script>
+<script src="js/due.js"></script>
+<script src="js/payments.js"></script>
+<script src="js/quality.js"></script>
+<script src="js/members.js"></script>
+<script src="js/sync.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
