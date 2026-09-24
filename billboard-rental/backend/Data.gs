@@ -288,13 +288,16 @@ function readRentals_() {
     NUMBER_FIELDS.forEach(function (f) { o[f] = toNumber_(get(f)); });
 
     // --- ยอดเงิน ---
+    // 1 แถว = ค่าเช่า 1 เดือน (คอลัมน์ Month) — สัญญาหนึ่งมี 12 แถวต่อปี
+    // monthlyCost = ค่าเช่าของเดือนนั้น · installment = ยอดที่แถวนี้สมทบในงวดที่จ่ายวัน payDate
+    //   รายเดือน  1 แถว  = 1 งวด · ราย 3 เดือน 3 แถวใช้วันชำระเดียวกัน · รายปี 12 แถวใช้วันชำระเดียวกัน
+    //   ยอดที่ต้องจ่ายจริงต่องวด = ผลรวม installment ของแถวที่มี payDate เดียวกัน (Api.gs: payGroups_)
     o.freq = freqOf_(o.payment);
     const m = o.amountMonth, y = o.amountYear;
-    if (o.freq === 'monthly')        { o.installment = m || y;     o.annualCost = m ? m * 12 : y; }
-    else if (o.freq === 'quarterly') { o.installment = m * 3 || y; o.annualCost = m ? m * 12 : y; }
-    else if (o.freq === 'yearly')    { o.installment = y || m;     o.annualCost = y || m; }
-    else                             { o.installment = m || y;     o.annualCost = m ? m * 12 : y; }
-    o.installment += o.adjust;
+    o.monthlyCost = m || (y ? y / 12 : 0);
+    o.installment = o.monthlyCost + o.adjust;
+    o.annualCost  = o.monthlyCost * 12;
+    o.lineKey = [o.contractNo, o.vendorNo, o.mediaSite, o.payment].join('|');
 
     // --- วันที่ต้องจ่ายถัดไป ---
     const paid = o.payStatus === PAY_DONE;

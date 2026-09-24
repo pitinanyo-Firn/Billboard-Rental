@@ -60,7 +60,7 @@ function alertTable_(title, color, rows) {
   if (!rows.length) return '';
   const th = 'style="text-align:left;padding:8px 10px;background:#F8FAFC;border-bottom:1px solid #E2E8F0;font-size:12px;color:#334155"';
   const td = 'style="padding:8px 10px;border-bottom:1px solid #F1F5F9;font-size:13px;vertical-align:top"';
-  const total = rows.reduce(function (s, d) { return s + d.installment; }, 0);
+  const total = rows.reduce(function (s, d) { return s + d.amount; }, 0);
   return '<h3 style="margin:22px 0 8px;font-size:15px;color:' + color + '">' + htmlEsc_(title) +
     ' (' + rows.length + ' รายการ · ' + fmtMoney_(total) + ' บาท)</h3>' +
     '<table style="border-collapse:collapse;width:100%;font-family:Arial,sans-serif">' +
@@ -74,7 +74,7 @@ function alertTable_(title, color, rows) {
         '<td ' + td + '><b>' + htmlEsc_(d.vendorName || '-') + '</b></td>' +
         '<td ' + td + '>' + htmlEsc_(d.mediaSite || '-') + '</td>' +
         '<td ' + td + '>' + htmlEsc_(d.contractNo || '-') + '</td>' +
-        '<td ' + td + ' align="right"><b>' + fmtMoney_(d.installment) + '</b></td></tr>';
+        '<td ' + td + ' align="right"><b>' + fmtMoney_(d.amount) + '</b></td></tr>';
     }).join('') + '</table>';
 }
 
@@ -97,7 +97,7 @@ function byPayDate_(a, b) { return a.payDate < b.payDate ? -1 : a.payDate > b.pa
 /** รันอัตโนมัติทุกวัน — ห้ามเปลี่ยนชื่อ (ผูกกับ trigger) */
 function dailyAlertCheck() {
   invalidateData_();
-  const data = readRentals_().filter(function (d) { return d.payDate && d.installment; });
+  const data = payGroups_(readRentals_()).filter(function (g) { return g.amount; });
   const offsets = alertOffsets_().sort(function (a, b) { return a - b; });
   const sections = [], parts = [];
 
@@ -125,7 +125,7 @@ function dailyAlertCheck() {
 
 /** รายการภายใน DUE_SOON_DAYS วัน + เลยกำหนด (ใช้กับอีเมลทดสอบ / ส่งเองจากหน้าเว็บ) */
 function alertDigestSections_() {
-  const data = readRentals_().filter(function (d) { return d.payDate && d.installment; });
+  const data = payGroups_(readRentals_()).filter(function (g) { return g.amount; });
   const soon = data.filter(function (d) { return d.daysToPay >= 0 && d.daysToPay <= CFG.DUE_SOON_DAYS; }).sort(byPayDate_);
   const overdue = data.filter(function (d) { return d.payAlert === 'overdue'; }).sort(byPayDate_);
   return {

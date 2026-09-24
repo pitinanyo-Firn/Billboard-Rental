@@ -17,26 +17,45 @@ function monthIndex_(ym) {
 }
 
 /**
- * ประมาณการค่าเช่าที่ต้องจ่าย 12 เดือนข้างหน้า (ตามความถี่การจ่าย จนถึงวันสิ้นสุดสัญญา)
- *   รายเดือน → ทุกเดือน · ราย 3 เดือน → ทุก 3 เดือนนับจากเดือนที่ชำระตามสัญญา · รายปี → เดือนเดียวกับวันชำระตามสัญญาของทุกปี
+ * งวดการจ่าย = แถวที่มี "วันที่ต้องจ่าย" เดียวกันของคู่สัญญา/ทำเล/สัญญาเดียวกัน
+ * (ราย 3 เดือน 3 แถว และรายปี 12 แถว ใช้วันชำระเดียวกัน — รวมเป็นงวดเดียว)
  */
+function payGroups_(data) {
+  const map = {};
+  data.forEach(function (d) {
+    if (!d.payDate) return;
+    const key = [d.contractNo, d.vendorNo, d.mediaSite, d.payDate, d.payKind].join('|');
+    if (!map[key]) {
+      map[key] = {
+        id: d.id, contractNo: d.contractNo, company: d.company, vendorName: d.vendorName,
+        mediaSite: d.mediaSite, mediaType: d.mediaType, payment: d.payment, rent: d.rent,
+        payDate: d.payDate, payKind: d.payKind, daysToPay: d.daysToPay, payAlert: d.payAlert,
+        payStatus: d.payStatus, amount: 0, months: [], rows: []
+      };
+    }
+    const g = map[key];
+    g.amount += d.installment;
+    g.months.push(d.month);
+    g.rows.push(d.id);
+    // งวดถือว่ายังไม่เบิก ถ้ามีแถวใดยังรอเบิก
+    if (d.payStatus !== PAY_DONE) { g.payStatus = d.payStatus; g.payAlert = d.payAlert; }
+  });
+  return Object.keys(map).map(function (k) {
+    const g = map[k];
+    g.amount = Math.round(g.amount * 100) / 100;
+    return g;
+  }).sort(function (a, b) { return a.payDate < b.payDate ? -1 : a.payDate > b.payDate ? 1 : 0; });
+}
+
+/** ค่าเช่าที่ต้องจ่ายรายเดือน 12 เดือนข้างหน้า — รวมยอดตามเดือนของวันที่ต้องจ่ายจริง */
 function forecast_(data) {
   const months = nextMonths_(12);
   const sum = {};
   months.forEach(function (k) { sum[k] = 0; });
   data.forEach(function (d) {
-    if (!d.installment) return;
-    const end = d.endDate ? d.endDate.slice(0, 7) : '9999-12';
-    const anchor = d.dueDate ? monthIndex_(d.dueDate.slice(0, 7)) : null;
-    months.forEach(function (k) {
-      if (k > end) return;
-      const i = monthIndex_(k);
-      if (d.freq === 'monthly' ||
-          (d.freq === 'quarterly' && anchor !== null && ((i - anchor) % 3 + 3) % 3 === 0) ||
-          (d.freq === 'yearly' && anchor !== null && (i - anchor) % 12 === 0)) {
-        sum[k] += d.installment;
-      }
-    });
+    if (!d.installment || !d.dueDate) return;
+    const k = d.dueDate.slice(0, 7);
+    if (k in sum) sum[k] += d.installment;
   });
   return months.map(function (k) { return { label: k, value: Math.round(sum[k]) }; });
 }
@@ -47,6 +66,7 @@ function apiDashboard_(token) {
   const payments = readPayments_();
   const receipts = readReceipts_();
 
+  // 1 แถว = ค่าเช่า 1 เดือน → ผลรวม monthlyCost ของทุกแถวในชีต = ค่าเช่าทั้งปี
   const group = function (key, valFn) {
     const m = {};
     data.forEach(function (d) {
@@ -57,8 +77,14 @@ function apiDashboard_(token) {
       .map(function (k) { return { label: k, value: Math.round(m[k]) }; })
       .sort(function (a, b) { return b.value - a.value; });
   };
-  const count = function () { return 1; };
-  const cost = function (d) { return d.annualCost; };
+  const cost = function (d) { return d.monthlyCost; };
+
+  // "รายการค่าเช่า" 1 รายการ = 1 คู่สัญญา/ทำเล/รูปแบบการจ่าย (สัญญาหนึ่งมีหลายแถวรายเดือน)
+  const lines = {};
+  data.forEach(function (d) { if (!lines[d.lineKey]) lines[d.lineKey] = d; });
+  const lineList = Object.keys(lines).map(function (k) { return lines[k]; });
+  const countLines = function (fn) { return lineList.filter(fn).length; };
+  const groups = payGroups_(data);
 
   // ค่าเช่าต่อปีแยกประเภทสื่อ (แสดงครบทุกประเภทแม้เป็น 0)
   const mediaTypes = MEDIA_TYPES.slice();
@@ -69,8 +95,8 @@ function apiDashboard_(token) {
     const rows = data.filter(function (d) { return d.mediaType === t; });
     return {
       label: t,
-      count: rows.length,
-      value: Math.round(rows.reduce(function (s, d) { return s + d.annualCost; }, 0)),
+      count: lineList.filter(function (d) { return d.mediaType === t; }).length,
+      value: Math.round(rows.reduce(function (s, d) { return s + d.monthlyCost; }, 0)),
       paid:  rows.filter(function (d) { return d.payStatus === PAY_DONE; }).length,
       wait:  rows.filter(function (d) { return d.payStatus !== PAY_DONE; }).length
     };
@@ -84,18 +110,29 @@ function apiDashboard_(token) {
     if (d.endDate && expiry[d.endDate.slice(0, 7)]) expiry[d.endDate.slice(0, 7)][d.contractNo || d.id] = 1;
   });
 
-  const annual = data.reduce(function (s, d) { return s + d.annualCost; }, 0);
+  const annual = data.reduce(function (s, d) { return s + d.monthlyCost; }, 0);
+  // ค่าเช่าเดือนนี้ = ผลรวมแถวของรอบเดือนปัจจุบัน (ถ้าไม่มีรอบนี้ในชีต ใช้ค่าเฉลี่ยทั้งปี)
+  const thisMonth = Utilities.formatDate(new Date(), CFG.TZ, 'MMM-yy');
+  const monthRows = data.filter(function (d) { return d.month === thisMonth; });
+  const monthCost = monthRows.length
+    ? monthRows.reduce(function (s, d) { return s + d.monthlyCost; }, 0)
+    : annual / 12;
   const kpi = {
-    total:        data.length,
+    total:        lineList.length,                 // รายการค่าเช่า (ไม่นับซ้ำรายเดือน)
+    rows:         data.length,                     // แถวในชีตทั้งหมด (1 แถว = 1 เดือน)
     contracts:    Object.keys(data.reduce(function (m, d) { m[d.contractNo || d.id] = 1; return m; }, {})).length,
     annualCost:   Math.round(annual),
-    monthlyCost:  Math.round(annual / 12),
+    monthlyCost:  Math.round(monthCost),
+    monthLabel:   monthRows.length ? thisMonth : '',
     paid:         data.filter(function (d) { return d.payStatus === PAY_DONE; }).length,
     waiting:      data.filter(function (d) { return d.payStatus !== PAY_DONE; }).length,
-    overdue:      data.filter(function (d) { return d.payAlert === 'overdue'; }).length,
-    dueSoon:      data.filter(function (d) { return d.payAlert === 'due3' || d.payAlert === 'soon'; }).length,
-    expiring:     data.filter(function (d) { return d.expireAlert === 'warning'; }).length,
-    expired:      data.filter(function (d) { return d.expireAlert === 'expired'; }).length,
+    overdue:      groups.filter(function (g) { return g.payAlert === 'overdue'; }).length,
+    dueSoon:      groups.filter(function (g) { return g.payAlert === 'due3' || g.payAlert === 'soon'; }).length,
+    dueAmount:    Math.round(groups.filter(function (g) {
+                    return g.payAlert === 'overdue' || g.payAlert === 'due3' || g.payAlert === 'soon';
+                  }).reduce(function (s, g) { return s + g.amount; }, 0)),
+    expiring:     countLines(function (d) { return d.expireAlert === 'warning'; }),
+    expired:      countLines(function (d) { return d.expireAlert === 'expired'; }),
     issues:       data.filter(function (d) { return d.issues.length; }).length,
     receiptWait:  receipts.filter(function (r) { return r.status === RECEIPT_STATUSES[0]; }).length
   };
@@ -113,7 +150,6 @@ function apiDashboard_(token) {
       costByMedia: costByMedia,
       byCompany:   group('company', cost),
       byRent:      group('rent', cost),
-      byPayment:   group('payment', count),
       forecast:    forecast_(data),
       expiry:      months.map(function (k) { return { label: k, value: Object.keys(expiry[k]).length }; })
     },
@@ -125,6 +161,7 @@ function apiDashboard_(token) {
       rent:      uniq('rent')
     },
     rentals: data,
+    payGroups: groups,
     payments: payments,
     receipts: receipts,
     receiptStatuses: RECEIPT_STATUSES,
@@ -140,9 +177,17 @@ function apiRental_(token, id) {
   const item = readRentals_().filter(function (d) { return d.id === id; })[0];
   if (!item) return { ok: false, code: 'NOT_FOUND', message: 'ไม่พบรายการค่าเช่า' };
   const same = function (x) { return x.vendor === item.vendorName && x.site === item.mediaSite; };
+  const cycles = readRentals_()
+    .filter(function (d) { return d.lineKey === item.lineKey; })
+    .map(function (d) {
+      return { id: d.id, _row: d._row, month: d.month, dueDate: d.dueDate, chequeDate: d.chequeDate,
+               payStatus: d.payStatus, installment: d.installment, memoInv: d.memoInv, ecmNo: d.ecmNo,
+               issues: d.issues.length };
+    });
   return {
     ok: true,
     rental: item,
+    cycles: cycles,
     payments: readPayments_().filter(same),
     receipts: readReceipts_().filter(same)
   };
