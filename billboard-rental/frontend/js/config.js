@@ -8,7 +8,7 @@ const CONFIG = {
    * URL ของ Apps Script Web App (ลงท้ายด้วย /exec)
    * ได้จาก: Apps Script → Deploy → New deployment → Web app → Web app URL
    */
-  API_URL: 'https://script.google.com/macros/s/XXXX/exec',
+  API_URL: 'https://script.google.com/macros/s/AKfycbyPAZq-VdvGBxH8CfoXKqDKvh8t6oLdWtTOuXFPl2VL0CZqYqQifyzjyzW7Ib5-ETXRrg/exec',
 
   /** ชื่อ key ที่ใช้เก็บ session token ใน sessionStorage */
   TOKEN_KEY: 'pb_billboard_token',
