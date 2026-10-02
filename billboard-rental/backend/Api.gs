@@ -127,6 +127,7 @@ function apiDashboard_(token) {
     paid:         data.filter(function (d) { return d.payStatus === PAY_DONE; }).length,
     waiting:      data.filter(function (d) { return d.payStatus !== PAY_DONE; }).length,
     overdue:      groups.filter(function (g) { return g.payAlert === 'overdue'; }).length,
+    prior:        groups.filter(function (g) { return g.payAlert === 'prior'; }).length,
     dueSoon:      groups.filter(function (g) { return g.payAlert === 'due3' || g.payAlert === 'soon'; }).length,
     dueAmount:    Math.round(groups.filter(function (g) {
                     return g.payAlert === 'overdue' || g.payAlert === 'due3' || g.payAlert === 'soon';

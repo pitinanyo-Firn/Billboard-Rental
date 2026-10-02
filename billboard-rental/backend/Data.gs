@@ -229,6 +229,10 @@ function checkRow_(o, raw, disp, today) {
   }
   if (o.payStatus === PAY_DONE && !o.memoInv && !o.ecmNo) add('memoInv', 'medium', 'สถานะเบิกแล้ว แต่ไม่มีเลข MEMO/INV และ ECM');
   if (o.payStatus && PAY_STATUSES.indexOf(o.payStatus) < 0) add('payStatus', 'medium', 'Status Payment ไม่ใช่ ' + PAY_STATUSES.join(' / '));
+  if (o.priorPeriod && o.payStatus !== PAY_DONE) {
+    add('payStatus', 'medium', 'วันชำระ ' + disp.dueDate + ' เป็นงวดของปีก่อน (Rental Year ' + o.rentalYear +
+        ') แต่สถานะยังเป็น "' + (o.payStatus || '-') + '" — ถ้าจ่ายแล้วให้เปลี่ยนเป็น ' + PAY_DONE);
+  }
 
   Object.keys(VALUE_FIX).forEach(function (f) {
     const to = VALUE_FIX[f][clean_(raw[f])];
@@ -312,6 +316,14 @@ function readRentals_() {
     else if (o.daysToPay <= 3)                 o.payAlert = 'due3';
     else if (o.daysToPay <= CFG.DUE_SOON_DAYS) o.payAlert = 'soon';
     else                                       o.payAlert = paid ? 'paid' : 'normal';
+
+    // --- งวดของปีก่อน ---
+    // ชีตมี 12 แถวต่อปี (Rental Year) — งวดรายปี/ราย 3 เดือนบางแถวอ้างวันชำระของปีก่อน
+    // เช่น Rental Year 2026 รอบ Jan-26 แต่ชำระ 31/03/2025 (จ่ายไปแล้วในรอบสัญญาปีก่อน)
+    // ไม่นับเป็น "เลยกำหนดจ่าย" — แจ้งในแท็บตรวจสอบข้อมูลให้เปลี่ยนสถานะแทน
+    const ry = (String(o.rentalYear).match(/\d{4}/) || [])[0];
+    o.priorPeriod = !!(ry && o.dueDate && o.dueDate.slice(0, 4) < ry);
+    if (o.priorPeriod && !paid && o.payKind === 'due') o.payAlert = 'prior';
 
     // --- อายุสัญญา ---
     o.daysToExpire = daysBetween_(today, o.endDate);

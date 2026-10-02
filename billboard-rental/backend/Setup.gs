@@ -64,7 +64,8 @@ function onOpen() {
     .addItem('เปิดการเตือนทางอีเมล (ทุกวัน)', 'installAlertTrigger')
     .addItem('ปิดการเตือนทางอีเมล', 'removeAlertTrigger')
     .addItem('ตรวจและส่งอีเมลเตือนตอนนี้', 'dailyAlertCheck')
-    .addItem('ส่งอีเมลทดสอบ', 'testAlertEmail')
+    .addItem('ส่งอีเมลทดสอบ (แจ้งเตือนล่วงหน้า)', 'testAlertEmail')
+    .addItem('ส่งอีเมลทดสอบ (สรุปเดือนนี้)', 'testMonthlyEmail')
     .addToUi();
 }
 
