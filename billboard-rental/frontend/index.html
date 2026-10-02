@@ -151,6 +151,7 @@
             <option value="soon">ใกล้ครบกำหนด</option>
             <option value="normal">ยังไม่ถึงกำหนด</option>
             <option value="paid">เบิกแล้ว</option>
+            <option value="prior">งวดของปีก่อน (ตรวจสถานะ)</option>
             <option value="unknown">ไม่ระบุวันที่</option>
           </select>
           <button class="btn btn-ghost" id="btnResetFilter">ล้างตัวกรอง</button>
@@ -193,9 +194,25 @@
           <span id="alertBadge"></span>
         </div>
         <div class="cell-mute" id="alertInfo">กำลังโหลด…</div>
-        <div class="notice-actions hidden" id="alertAdmin">
-          <button class="btn btn-ghost" id="btnMailSelf">ส่งสรุปรายการครบกำหนดให้ฉัน (ทดสอบ)</button>
-          <button class="btn btn-ghost" id="btnMailAll">ส่งสรุปให้ผู้รับทั้งหมด</button>
+        <div class="hidden" id="alertAdmin">
+          <div class="notice-actions">
+            <button class="btn btn-primary btn-sm hidden" id="btnInstallAlerts" style="width:auto">เปิดการแจ้งเตือนอัตโนมัติ</button>
+          </div>
+          <div class="mail-row">
+            <b>① แจ้งเตือนล่วงหน้า</b>
+            <span class="cell-mute" id="advLabel">ก่อนถึงกำหนด 7 วัน และ 3 วัน</span>
+            <div class="spacer"></div>
+            <button class="btn btn-ghost btn-sm" id="btnAdvPreview">ดูตัวอย่างของวันนี้</button>
+            <button class="btn btn-ghost btn-sm" id="btnAdvSelf">ส่งให้ฉัน (ทดสอบ)</button>
+          </div>
+          <div class="mail-row">
+            <b>② สรุปงานประจำเดือน</b>
+            <input type="month" id="mailMonth" class="st-input" style="width:170px">
+            <div class="spacer"></div>
+            <button class="btn btn-ghost btn-sm" id="btnMonPreview">ดูตัวอย่าง</button>
+            <button class="btn btn-ghost btn-sm" id="btnMonSelf">ส่งให้ฉัน (ทดสอบ)</button>
+            <button class="btn btn-ghost btn-sm" id="btnMonAll">ส่งให้ผู้รับทั้งหมด</button>
+          </div>
         </div>
       </div>
 
