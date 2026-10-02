@@ -82,7 +82,7 @@ function byPayDate_(a, b) { return a.payDate < b.payDate ? -1 : a.payDate > b.pa
 
 /* ---------- ชิ้นส่วนอีเมล (inline style) ---------- */
 
-const MAIL = {
+const MSTYLE = {
   FONT:  "font-family:'IBM Plex Sans Thai','Sarabun','Segoe UI',Tahoma,Arial,sans-serif;",
   BRAND: '#E4002B',
   INK:   '#0F172A',
@@ -107,11 +107,11 @@ function statCards_(cards) {
   const w = Math.floor(100 / cards.length);
   return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;border-spacing:8px 0;margin:0 -8px">' +
     '<tr>' + cards.map(function (c) {
-      return '<td width="' + w + '%" style="background:#FFFFFF;border:1px solid ' + MAIL.LINE + ';border-top:4px solid ' + c[3] +
+      return '<td width="' + w + '%" style="background:#FFFFFF;border:1px solid ' + MSTYLE.LINE + ';border-top:4px solid ' + c[3] +
         ';border-radius:10px;padding:12px 14px;vertical-align:top">' +
-        '<div style="font-size:12px;color:' + MAIL.MUTED + ';font-weight:600">' + htmlEsc_(c[0]) + '</div>' +
-        '<div style="font-size:20px;font-weight:800;color:' + MAIL.INK + ';line-height:1.35;margin-top:2px">' + htmlEsc_(c[1]) + '</div>' +
-        (c[2] ? '<div style="font-size:11.5px;color:' + MAIL.MUTED + '">' + htmlEsc_(c[2]) + '</div>' : '') +
+        '<div style="font-size:12px;color:' + MSTYLE.MUTED + ';font-weight:600">' + htmlEsc_(c[0]) + '</div>' +
+        '<div style="font-size:20px;font-weight:800;color:' + MSTYLE.INK + ';line-height:1.35;margin-top:2px">' + htmlEsc_(c[1]) + '</div>' +
+        (c[2] ? '<div style="font-size:11.5px;color:' + MSTYLE.MUTED + '">' + htmlEsc_(c[2]) + '</div>' : '') +
         '</td>';
     }).join('') + '</tr></table>';
 }
@@ -119,28 +119,28 @@ function statCards_(cards) {
 /** หัวข้อกลุ่ม + ตาราง · cols: [[หัวคอลัมน์, align]] · rows: [[cell html...]] */
 function mailTable_(title, color, note, cols, rows, totalLabel, total) {
   if (!rows.length) return '';
-  const th = 'padding:9px 12px;background:' + MAIL.SOFT + ';border-bottom:1px solid ' + MAIL.LINE +
+  const th = 'padding:9px 12px;background:' + MSTYLE.SOFT + ';border-bottom:1px solid ' + MSTYLE.LINE +
              ';font-size:11.5px;font-weight:700;color:#334155;';
   return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:26px 0 10px">' +
     '<tr><td style="border-left:4px solid ' + color + ';padding:2px 0 2px 10px">' +
-      '<div style="font-size:16px;font-weight:800;color:' + MAIL.INK + '">' + htmlEsc_(title) + '</div>' +
-      (note ? '<div style="font-size:12.5px;color:' + MAIL.MUTED + '">' + note + '</div>' : '') +
+      '<div style="font-size:16px;font-weight:800;color:' + MSTYLE.INK + '">' + htmlEsc_(title) + '</div>' +
+      (note ? '<div style="font-size:12.5px;color:' + MSTYLE.MUTED + '">' + note + '</div>' : '') +
     '</td></tr></table>' +
-    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ' + MAIL.LINE +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ' + MSTYLE.LINE +
       ';border-radius:10px;border-collapse:separate;overflow:hidden;background:#FFFFFF">' +
     '<tr>' + cols.map(function (c) {
       return '<th align="' + (c[1] || 'left') + '" style="' + th + 'text-align:' + (c[1] || 'left') + '">' + htmlEsc_(c[0]) + '</th>';
     }).join('') + '</tr>' +
     rows.map(function (r, i) {
-      const bg = i % 2 ? MAIL.SOFT : '#FFFFFF';
+      const bg = i % 2 ? MSTYLE.SOFT : '#FFFFFF';
       return '<tr>' + r.map(function (cell, j) {
         return '<td align="' + (cols[j][1] || 'left') + '" style="padding:10px 12px;border-bottom:1px solid #F1F5F9;background:' + bg +
-               ';font-size:13px;color:' + MAIL.INK + ';vertical-align:top;text-align:' + (cols[j][1] || 'left') + '">' + cell + '</td>';
+               ';font-size:13px;color:' + MSTYLE.INK + ';vertical-align:top;text-align:' + (cols[j][1] || 'left') + '">' + cell + '</td>';
       }).join('') + '</tr>';
     }).join('') +
-    '<tr><td colspan="' + (cols.length - 1) + '" align="right" style="padding:11px 12px;background:' + MAIL.SOFT +
+    '<tr><td colspan="' + (cols.length - 1) + '" align="right" style="padding:11px 12px;background:' + MSTYLE.SOFT +
       ';font-size:13px;font-weight:700;color:#334155;text-align:right">' + htmlEsc_(totalLabel) + '</td>' +
-      '<td align="right" style="padding:11px 12px;background:' + MAIL.SOFT + ';font-size:14px;font-weight:800;color:' + color +
+      '<td align="right" style="padding:11px 12px;background:' + MSTYLE.SOFT + ';font-size:14px;font-weight:800;color:' + color +
       ';text-align:right;white-space:nowrap">' + fmtMoney_(total) + '</td></tr>' +
     '</table>';
 }
@@ -148,12 +148,12 @@ function mailTable_(title, color, note, cols, rows, totalLabel, total) {
 /** ผู้รับเงิน + ทำเล ในช่องเดียว */
 function vendorCell_(d) {
   return '<div style="font-weight:700">' + htmlEsc_(d.vendorName || '-') + '</div>' +
-         '<div style="font-size:12px;color:' + MAIL.MUTED + ';margin-top:2px">' + htmlEsc_(d.mediaSite || '-') + '</div>';
+         '<div style="font-size:12px;color:' + MSTYLE.MUTED + ';margin-top:2px">' + htmlEsc_(d.mediaSite || '-') + '</div>';
 }
 
 function contractCell_(d, extra) {
   return '<div>' + htmlEsc_(d.contractNo || '-') + '</div>' +
-         '<div style="font-size:12px;color:' + MAIL.MUTED + ';margin-top:2px">' + htmlEsc_(extra || d.payment || '') + '</div>';
+         '<div style="font-size:12px;color:' + MSTYLE.MUTED + ';margin-top:2px">' + htmlEsc_(extra || d.payment || '') + '</div>';
 }
 
 function moneyCell_(n) {
@@ -166,12 +166,12 @@ function moneyCell_(n) {
  */
 function buildEmail_(subject, o) {
   const site = prop_('SITE_URL', '');
-  const accent = o.accent || MAIL.BRAND;
+  const accent = o.accent || MSTYLE.BRAND;
   const body = (o.sections || []).filter(String).join('') ||
-    '<div style="margin-top:22px;padding:26px;border:1px dashed ' + MAIL.LINE + ';border-radius:10px;text-align:center;color:' +
-    MAIL.MUTED + ';font-size:14px;background:#FFFFFF">' + htmlEsc_(o.empty || 'ไม่มีรายการ') + '</div>';
+    '<div style="margin-top:22px;padding:26px;border:1px dashed ' + MSTYLE.LINE + ';border-radius:10px;text-align:center;color:' +
+    MSTYLE.MUTED + ';font-size:14px;background:#FFFFFF">' + htmlEsc_(o.empty || 'ไม่มีรายการ') + '</div>';
   const html =
-    '<div style="margin:0;padding:24px 12px;background:' + MAIL.BG + ';' + MAIL.FONT + '">' +
+    '<div style="margin:0;padding:24px 12px;background:' + MSTYLE.BG + ';' + MSTYLE.FONT + '">' +
     '<table role="presentation" align="center" width="100%" cellpadding="0" cellspacing="0" style="max-width:820px;margin:0 auto">' +
       // หัว
       '<tr><td style="background:' + accent + ';border-radius:14px 14px 0 0;padding:22px 26px">' +
@@ -185,14 +185,14 @@ function buildEmail_(subject, o) {
         '<div style="color:#FFFFFF;font-size:13.5px;opacity:.92;margin-top:4px">' + htmlEsc_(o.subtitle || '') + '</div>' +
       '</td></tr>' +
       // เนื้อหา
-      '<tr><td style="background:' + MAIL.BG + ';padding:20px 18px 6px;border-left:1px solid ' + MAIL.LINE + ';border-right:1px solid ' + MAIL.LINE + '">' +
+      '<tr><td style="background:' + MSTYLE.BG + ';padding:20px 18px 6px;border-left:1px solid ' + MSTYLE.LINE + ';border-right:1px solid ' + MSTYLE.LINE + '">' +
         (o.stats && o.stats.length ? statCards_(o.stats) : '') + body +
         (site ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:28px 0 8px"><tr><td align="center">' +
-          '<a href="' + htmlEsc_(site) + '" style="display:inline-block;background:' + MAIL.BRAND + ';color:#FFFFFF;text-decoration:none;' +
+          '<a href="' + htmlEsc_(site) + '" style="display:inline-block;background:' + MSTYLE.BRAND + ';color:#FFFFFF;text-decoration:none;' +
           'font-weight:700;font-size:14px;padding:12px 26px;border-radius:10px">เปิดระบบ Billboard Rental Hub →</a></td></tr></table>' : '') +
       '</td></tr>' +
       // footer
-      '<tr><td style="background:#FFFFFF;border:1px solid ' + MAIL.LINE + ';border-top:none;border-radius:0 0 14px 14px;padding:14px 26px;' +
+      '<tr><td style="background:#FFFFFF;border:1px solid ' + MSTYLE.LINE + ';border-top:none;border-radius:0 0 14px 14px;padding:14px 26px;' +
         'font-size:11.5px;color:#94A3B8;line-height:1.6">' +
         'อีเมลอัตโนมัติจากระบบ Billboard Rental Hub — กรุณาตรวจสอบกระแสเงินสดและจัดเตรียมเช็คให้ทันกำหนด<br>' +
         'ยอดเงินของงวดรายปีใช้ Amount/Year · ราย 3 เดือนรวมยอดทุกเดือนในงวด · ข้อมูลจากชีต Contract_Master' +
@@ -216,7 +216,7 @@ function advanceTable_(title, color, note, rows) {
       const span = d.months.length > 1 ? d.payment + ' · ' + d.months[0] + ' – ' + d.months[d.months.length - 1] : d.payment;
       return [
         '<div style="font-weight:800;white-space:nowrap">' + fmtThDate_(d.payDate) + '</div>' +
-          '<div style="font-size:11.5px;color:' + MAIL.MUTED + ';margin-top:3px">' + kind + '</div>',
+          '<div style="font-size:11.5px;color:' + MSTYLE.MUTED + ';margin-top:3px">' + kind + '</div>',
         vendorCell_(d),
         contractCell_(d, span),
         statusPill_(d.payStatus),
@@ -225,36 +225,47 @@ function advanceTable_(title, color, note, rows) {
     }), 'รวม ' + rows.length + ' รายการ', total);
 }
 
-/** อีเมลแจ้งเตือนล่วงหน้าของวันนี้ — คืน null ถ้าไม่มีรายการ */
-function advanceEmail_() {
+/**
+ * อีเมลแจ้งเตือนล่วงหน้าของวันนี้ — แยก 1 ฉบับต่อรอบ (ครั้งที่ 1 ก่อน 7 วัน · ครั้งที่ 2 ก่อน 3 วัน)
+ * คืน [] ถ้าไม่มีรายการ · รอบที่ไม่มีรายการจะไม่ส่ง
+ */
+function advanceEmails_() {
   const groups = payGroups_(readRentals_()).filter(function (g) { return g.amount && g.payAlert !== 'prior'; });
   const offsets = alertOffsets_();
   const today = todayISO_();
-  const colors = ['#D97706', '#DC2626', '#7C3AED'];
-  const sections = [], parts = [], stats = [];
-  let all = 0, allCount = 0;
+  const out = [];
   offsets.forEach(function (n, i) {
     const rows = groups.filter(function (g) { return g.daysToPay === n; }).sort(byPayDate_);
-    const sum = rows.reduce(function (s, d) { return s + d.amount; }, 0);
-    const color = n <= 3 ? '#DC2626' : colors[i] || '#D97706';
-    stats.push(['ครั้งที่ ' + (i + 1) + ' · อีก ' + n + ' วัน', rows.length + ' รายการ', fmtMoney_(sum) + ' บาท', color]);
     if (!rows.length) return;
-    all += sum; allCount += rows.length;
-    parts.push('อีก ' + n + ' วัน ' + rows.length);
-    sections.push(advanceTable_('ครั้งที่ ' + (i + 1) + ' — ครบกำหนดในอีก ' + n + ' วัน', color,
-      'วันที่ต้องจ่าย ' + fmtThDate_(addDays_(today, n)), rows));
+    const sum = rows.reduce(function (s, d) { return s + d.amount; }, 0);
+    const round = 'ครั้งที่ ' + (i + 1);
+    const color = n <= 3 ? '#DC2626' : '#D97706';
+    const due = fmtThDate_(addDays_(today, n));
+    const email = buildEmail_('⏰ [Billboard Rental] ' + round + ' แจ้งเตือนล่วงหน้า ' + n + ' วัน — ครบกำหนด ' + due +
+                              ' · ' + rows.length + ' รายการ · ' + fmtMoney_(sum) + ' บาท', {
+      title: round + ' — แจ้งเตือนล่วงหน้า ' + n + ' วัน',
+      subtitle: 'รายการที่ครบกำหนดจ่ายวันที่ ' + due + ' · ข้อมูล ณ วันที่ ' + fmtThDate_(today),
+      accent: n <= 3 ? '#B91C1C' : MSTYLE.BRAND,
+      stats: [
+        ['รอบแจ้งเตือน', round, 'ก่อนถึงกำหนด ' + n + ' วัน', color],
+        ['วันที่ต้องจ่าย', due, 'อีก ' + n + ' วัน', MSTYLE.INK],
+        ['ยอดที่ต้องเตรียม', fmtMoney_(sum), rows.length + ' รายการ', color]
+      ],
+      sections: [advanceTable_('ครบกำหนดในอีก ' + n + ' วัน', color, 'วันที่ต้องจ่าย ' + due, rows)]
+    });
+    email.summary = round + ' (อีก ' + n + ' วัน) ' + rows.length + ' รายการ';
+    out.push(email);
   });
-  if (!sections.length) return null;
-  stats.push(['ยอดรวมที่ต้องเตรียม', fmtMoney_(all), allCount + ' รายการ', MAIL.INK]);
-  const email = buildEmail_('⏰ [Billboard Rental] แจ้งเตือนดิวจ่ายล่วงหน้า — ' + parts.join(' · ') + ' รายการ', {
-    title: 'แจ้งเตือนดิวจ่ายล่วงหน้า',
-    subtitle: offsets.map(function (n, i) { return 'ครั้งที่ ' + (i + 1) + ' ก่อน ' + n + ' วัน'; }).join(' · ') +
-              ' · ข้อมูล ณ วันที่ ' + fmtThDate_(today),
-    stats: stats,
-    sections: sections
-  });
-  email.summary = parts.join(', ');
-  return email;
+  return out;
+}
+
+/** แจ้งเตือนล่วงหน้าทั้งหมดของวันนี้รวมเป็นหน้าเดียว (ใช้ดูตัวอย่างบนเว็บ) — null ถ้าไม่มี */
+function advanceEmail_() {
+  const list = advanceEmails_();
+  if (!list.length) return null;
+  return { subject: list.map(function (e) { return e.subject; }).join('  |  '),
+           html: list.map(function (e) { return e.html; }).join('<div style="height:24px"></div>'),
+           summary: list.map(function (e) { return e.summary; }).join(', ') };
 }
 
 /* ---------- 2) สรุปประจำเดือน ---------- */
@@ -295,8 +306,8 @@ function monthTable_(title, color, note, rows) {
           '<div style="margin-top:4px">' + statusPill_(d.payStatus) + '</div>',
         vendorCell_(d),
         contractCell_(d, span),
-        '<div style="white-space:nowrap">' + (d.chequeDate ? fmtThDate_(d.chequeDate) : '<span style="color:' + MAIL.MUTED + '">-</span>') + '</div>' +
-          '<div style="font-size:12px;color:' + MAIL.MUTED + ';margin-top:2px">' + htmlEsc_(d.memoInv || '-') + '</div>',
+        '<div style="white-space:nowrap">' + (d.chequeDate ? fmtThDate_(d.chequeDate) : '<span style="color:' + MSTYLE.MUTED + '">-</span>') + '</div>' +
+          '<div style="font-size:12px;color:' + MSTYLE.MUTED + ';margin-top:2px">' + htmlEsc_(d.memoInv || '-') + '</div>',
         d.amount ? moneyCell_(d.amount) : '<span style="color:#B91C1C;font-size:12px;font-weight:700">ไม่มียอดในชีต</span>'
       ];
     }), 'รวม ' + rows.length + ' รายการ', total);
@@ -314,7 +325,7 @@ function monthlyEmail_(ym) {
     title: 'สรุปงานเดือน' + label,
     subtitle: 'รายการค่าเช่าที่ครบกำหนดชำระตามสัญญาในเดือน' + label + ' ทั้งหมด · ข้อมูล ณ วันที่ ' + fmtThDate_(todayISO_()),
     stats: [
-      ['รายการทั้งหมด', rows.length + ' รายการ', 'ยอดรวม ' + fmtMoney_(total) + ' บาท', MAIL.INK],
+      ['รายการทั้งหมด', rows.length + ' รายการ', 'ยอดรวม ' + fmtMoney_(total) + ' บาท', MSTYLE.INK],
       ['รอเบิก', wait.length + ' รายการ', fmtMoney_(sum(wait)) + ' บาท', '#D97706'],
       ['เบิกแล้ว', done.length + ' รายการ', fmtMoney_(sum(done)) + ' บาท', '#059669']
     ],
@@ -337,11 +348,10 @@ function dailyAlertCheck() {
   const to = alertRecipients_();
   const done = [];
 
-  const adv = advanceEmail_();
-  if (adv) {
-    sendEmail_(to, adv);
-    done.push(adv.summary);
-  }
+  advanceEmails_().forEach(function (e) {        // ส่งแยก 1 ฉบับต่อรอบ (7 วัน / 3 วัน)
+    sendEmail_(to, e);
+    done.push(e.summary);
+  });
   const today = todayISO_();
   if (+today.slice(8, 10) === ALERT.MONTHLY_DAY) {
     const mon = monthlyEmail_(today.slice(0, 7));
@@ -365,7 +375,8 @@ function noAdvanceEmail_() {
 /** ทดสอบ: ส่งตัวอย่างแจ้งเตือนล่วงหน้าของวันนี้ให้ CFG.ADMIN_EMAIL คนเดียว */
 function testAlertEmail() {
   invalidateData_();
-  sendEmail_([CFG.ADMIN_EMAIL], advanceEmail_() || noAdvanceEmail_());
+  const list = advanceEmails_();
+  (list.length ? list : [noAdvanceEmail_()]).forEach(function (e) { sendEmail_([CFG.ADMIN_EMAIL], e); });
   Logger.log('ส่งอีเมลทดสอบ → ' + CFG.ADMIN_EMAIL);
 }
 
@@ -441,14 +452,14 @@ function apiSendAlertNow_(token, p) {
   if (!me) return forbidden_('ส่งอีเมลแจ้งเตือน');
   invalidateData_();
   const to = p.toSelf ? [selfEmail_(me)] : alertRecipients_();
-  let email;
+  let list;
   if (p.type === 'monthly') {
-    email = monthlyEmail_(/^\d{4}-\d{2}$/.test(p.month || '') ? p.month : todayISO_().slice(0, 7));
+    list = [monthlyEmail_(/^\d{4}-\d{2}$/.test(p.month || '') ? p.month : todayISO_().slice(0, 7))];
   } else {
-    email = advanceEmail_();
-    if (!email) return { ok: false, code: 'NO_ITEMS', message: 'วันนี้ไม่มีรายการที่ครบกำหนดในอีก ' + alertOffsets_().join(' / ') + ' วัน' };
+    list = advanceEmails_();                       // แยกฉบับ: รอบ 7 วัน / รอบ 3 วัน
+    if (!list.length) return { ok: false, code: 'NO_ITEMS', message: 'วันนี้ไม่มีรายการที่ครบกำหนดในอีก ' + alertOffsets_().join(' / ') + ' วัน' };
   }
-  sendEmail_(to, email);
-  writeLog_(me.email, 'ALERT_EMAIL', 'manual:' + (email.summary || email.subject) + ' → ' + to.join(','));
-  return { ok: true, subject: email.subject, to: to };
+  list.forEach(function (e) { sendEmail_(to, e); });
+  writeLog_(me.email, 'ALERT_EMAIL', 'manual:' + list.map(function (e) { return e.summary || e.subject; }).join(' | ') + ' → ' + to.join(','));
+  return { ok: true, subject: list.map(function (e) { return e.subject; }).join('  |  '), count: list.length, to: to };
 }
