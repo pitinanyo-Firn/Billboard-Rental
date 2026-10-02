@@ -9,9 +9,12 @@
  * ผู้รับ: ALERT.DEFAULT_TO — เปลี่ยน/เพิ่มได้ที่ Script Property NOTICE_EMAILS (คั่นด้วย ,)
  * เปลี่ยนจำนวนวันล่วงหน้า: Script Property ALERT_OFFSETS เช่น 7,3
  *
- * เปิดใช้งาน: รัน installAlertTrigger() จาก editor ครั้งเดียว (หรือเมนู ⚙️ Billboard Rental)
+ * เปิดใช้งาน: รัน installAlertTrigger() จาก editor ครั้งเดียว (หรือปุ่มในแท็บครบกำหนดจ่าย)
  *   — ลบ trigger เดิมของ Billboard ERP (sendPaymentAlertEmails) ให้อัตโนมัติ กันอีเมลซ้ำ
+ *   — trigger ผูกกับ deployment version ที่ติดตั้ง: deploy เวอร์ชันใหม่แล้วต้องติดตั้งซ้ำ
  * ทดสอบ: testAlertEmail() / testMonthlyEmail() — ส่งตัวอย่างให้ CFG.ADMIN_EMAIL คนเดียว
+ *
+ * หน้าตาอีเมล: ใช้ <table> + inline style ทั้งหมด (Gmail / Outlook ไม่รองรับ flex/grid และตัด <style> บางส่วน)
  */
 
 const ALERT = {
@@ -52,7 +55,7 @@ function alertTriggerOn_() {
   return ScriptApp.getProjectTriggers().some(function (t) { return t.getHandlerFunction() === ALERT.HANDLER; });
 }
 
-/* ---------- รูปแบบ ---------- */
+/* ---------- รูปแบบตัวเลข/วันที่ ---------- */
 
 function fmtThDate_(iso) {
   if (!iso) return '-';
@@ -77,39 +80,124 @@ function thMonthLabel_(ym) {
 
 function byPayDate_(a, b) { return a.payDate < b.payDate ? -1 : a.payDate > b.payDate ? 1 : 0; }
 
-const MAIL_TH = 'style="text-align:left;padding:8px 10px;background:#F8FAFC;border-bottom:1px solid #E2E8F0;font-size:12px;color:#334155"';
-const MAIL_TD = 'style="padding:8px 10px;border-bottom:1px solid #F1F5F9;font-size:13px;vertical-align:top"';
+/* ---------- ชิ้นส่วนอีเมล (inline style) ---------- */
 
-/** ตารางแจ้งเตือนล่วงหน้า (งวดจาก payGroups_) */
-function alertTable_(title, color, rows) {
-  if (!rows.length) return '';
-  const total = rows.reduce(function (s, d) { return s + d.amount; }, 0);
-  return '<h3 style="margin:22px 0 8px;font-size:15px;color:' + color + '">' + htmlEsc_(title) +
-    ' (' + rows.length + ' รายการ · ' + fmtMoney_(total) + ' บาท)</h3>' +
-    '<table style="border-collapse:collapse;width:100%;font-family:Arial,sans-serif">' +
-    '<tr><th ' + MAIL_TH + '>วันที่ต้องจ่าย</th><th ' + MAIL_TH + '>ผู้รับเงิน (Vendor)</th><th ' + MAIL_TH + '>Media Site</th>' +
-    '<th ' + MAIL_TH + '>Contract No.</th><th ' + MAIL_TH + ' align="right">ยอดเงิน (บาท)</th></tr>' +
-    rows.map(function (d) {
-      const left = d.daysToPay === 0 ? 'วันนี้' : d.daysToPay > 0 ? 'อีก ' + d.daysToPay + ' วัน' : 'เลยมา ' + (-d.daysToPay) + ' วัน';
-      const kind = d.payKind === 'cheque' ? 'เช็คลงวันที่' : 'ชำระตามสัญญา';
-      return '<tr><td ' + MAIL_TD + '><b>' + fmtThDate_(d.payDate) + '</b><br><span style="color:' + color + ';font-size:12px">' +
-        left + ' · ' + kind + '</span></td>' +
-        '<td ' + MAIL_TD + '><b>' + htmlEsc_(d.vendorName || '-') + '</b></td>' +
-        '<td ' + MAIL_TD + '>' + htmlEsc_(d.mediaSite || '-') + '</td>' +
-        '<td ' + MAIL_TD + '>' + htmlEsc_(d.contractNo || '-') + '</td>' +
-        '<td ' + MAIL_TD + ' align="right"><b>' + fmtMoney_(d.amount) + '</b></td></tr>';
-    }).join('') + '</table>';
+const MAIL = {
+  FONT:  "font-family:'IBM Plex Sans Thai','Sarabun','Segoe UI',Tahoma,Arial,sans-serif;",
+  BRAND: '#E4002B',
+  INK:   '#0F172A',
+  MUTED: '#64748B',
+  LINE:  '#E2E8F0',
+  SOFT:  '#F8FAFC',
+  BG:    '#F1F5F9'
+};
+
+/** ป้ายสีเล็ก ๆ */
+function pill_(text, bg, fg) {
+  return '<span style="display:inline-block;padding:2px 9px;border-radius:999px;background:' + bg + ';color:' + fg +
+         ';font-size:11px;font-weight:700;line-height:18px;white-space:nowrap">' + htmlEsc_(text) + '</span>';
 }
 
-function buildEmail_(subject, intro, sections) {
+function statusPill_(s) {
+  return s === PAY_DONE ? pill_(s, '#ECFDF5', '#047857') : pill_(s || 'รอเบิก', '#FFFBEB', '#B45309');
+}
+
+/** การ์ดสรุปตัวเลขด้านบน: [[label, value, sub, color], ...] */
+function statCards_(cards) {
+  const w = Math.floor(100 / cards.length);
+  return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;border-spacing:8px 0;margin:0 -8px">' +
+    '<tr>' + cards.map(function (c) {
+      return '<td width="' + w + '%" style="background:#FFFFFF;border:1px solid ' + MAIL.LINE + ';border-top:4px solid ' + c[3] +
+        ';border-radius:10px;padding:12px 14px;vertical-align:top">' +
+        '<div style="font-size:12px;color:' + MAIL.MUTED + ';font-weight:600">' + htmlEsc_(c[0]) + '</div>' +
+        '<div style="font-size:20px;font-weight:800;color:' + MAIL.INK + ';line-height:1.35;margin-top:2px">' + htmlEsc_(c[1]) + '</div>' +
+        (c[2] ? '<div style="font-size:11.5px;color:' + MAIL.MUTED + '">' + htmlEsc_(c[2]) + '</div>' : '') +
+        '</td>';
+    }).join('') + '</tr></table>';
+}
+
+/** หัวข้อกลุ่ม + ตาราง · cols: [[หัวคอลัมน์, align]] · rows: [[cell html...]] */
+function mailTable_(title, color, note, cols, rows, totalLabel, total) {
+  if (!rows.length) return '';
+  const th = 'padding:9px 12px;background:' + MAIL.SOFT + ';border-bottom:1px solid ' + MAIL.LINE +
+             ';font-size:11.5px;font-weight:700;color:#334155;';
+  return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:26px 0 10px">' +
+    '<tr><td style="border-left:4px solid ' + color + ';padding:2px 0 2px 10px">' +
+      '<div style="font-size:16px;font-weight:800;color:' + MAIL.INK + '">' + htmlEsc_(title) + '</div>' +
+      (note ? '<div style="font-size:12.5px;color:' + MAIL.MUTED + '">' + note + '</div>' : '') +
+    '</td></tr></table>' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ' + MAIL.LINE +
+      ';border-radius:10px;border-collapse:separate;overflow:hidden;background:#FFFFFF">' +
+    '<tr>' + cols.map(function (c) {
+      return '<th align="' + (c[1] || 'left') + '" style="' + th + 'text-align:' + (c[1] || 'left') + '">' + htmlEsc_(c[0]) + '</th>';
+    }).join('') + '</tr>' +
+    rows.map(function (r, i) {
+      const bg = i % 2 ? MAIL.SOFT : '#FFFFFF';
+      return '<tr>' + r.map(function (cell, j) {
+        return '<td align="' + (cols[j][1] || 'left') + '" style="padding:10px 12px;border-bottom:1px solid #F1F5F9;background:' + bg +
+               ';font-size:13px;color:' + MAIL.INK + ';vertical-align:top;text-align:' + (cols[j][1] || 'left') + '">' + cell + '</td>';
+      }).join('') + '</tr>';
+    }).join('') +
+    '<tr><td colspan="' + (cols.length - 1) + '" align="right" style="padding:11px 12px;background:' + MAIL.SOFT +
+      ';font-size:13px;font-weight:700;color:#334155;text-align:right">' + htmlEsc_(totalLabel) + '</td>' +
+      '<td align="right" style="padding:11px 12px;background:' + MAIL.SOFT + ';font-size:14px;font-weight:800;color:' + color +
+      ';text-align:right;white-space:nowrap">' + fmtMoney_(total) + '</td></tr>' +
+    '</table>';
+}
+
+/** ผู้รับเงิน + ทำเล ในช่องเดียว */
+function vendorCell_(d) {
+  return '<div style="font-weight:700">' + htmlEsc_(d.vendorName || '-') + '</div>' +
+         '<div style="font-size:12px;color:' + MAIL.MUTED + ';margin-top:2px">' + htmlEsc_(d.mediaSite || '-') + '</div>';
+}
+
+function contractCell_(d, extra) {
+  return '<div>' + htmlEsc_(d.contractNo || '-') + '</div>' +
+         '<div style="font-size:12px;color:' + MAIL.MUTED + ';margin-top:2px">' + htmlEsc_(extra || d.payment || '') + '</div>';
+}
+
+function moneyCell_(n) {
+  return '<span style="font-weight:800;white-space:nowrap">' + fmtMoney_(n) + '</span>';
+}
+
+/**
+ * โครงอีเมล: แถบหัวสีแบรนด์ · การ์ดสรุป · เนื้อหา · ปุ่มเปิดระบบ · footer
+ * o: { title, subtitle, accent, stats: [[label, value, sub, color]], sections: [html], empty }
+ */
+function buildEmail_(subject, o) {
   const site = prop_('SITE_URL', '');
+  const accent = o.accent || MAIL.BRAND;
+  const body = (o.sections || []).filter(String).join('') ||
+    '<div style="margin-top:22px;padding:26px;border:1px dashed ' + MAIL.LINE + ';border-radius:10px;text-align:center;color:' +
+    MAIL.MUTED + ';font-size:14px;background:#FFFFFF">' + htmlEsc_(o.empty || 'ไม่มีรายการ') + '</div>';
   const html =
-    '<div style="font-family:Arial,sans-serif;color:#0F172A;max-width:900px">' +
-    '<div style="font-size:18px;font-weight:bold;margin-bottom:4px">Plan B — Billboard Rental Hub</div>' +
-    '<div style="color:#475569;font-size:13px">' + htmlEsc_(intro) + '</div>' +
-    sections.join('') +
-    (site ? '<p style="margin-top:22px"><a href="' + htmlEsc_(site) + '" style="background:#E4002B;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-size:13px">เปิดระบบ Billboard Rental Hub</a></p>' : '') +
-    '<p style="color:#94A3B8;font-size:11px;margin-top:22px">อีเมลอัตโนมัติจากระบบ — กรุณาตรวจสอบกระแสเงินสดและจัดเตรียมเช็คให้ทันกำหนด</p></div>';
+    '<div style="margin:0;padding:24px 12px;background:' + MAIL.BG + ';' + MAIL.FONT + '">' +
+    '<table role="presentation" align="center" width="100%" cellpadding="0" cellspacing="0" style="max-width:820px;margin:0 auto">' +
+      // หัว
+      '<tr><td style="background:' + accent + ';border-radius:14px 14px 0 0;padding:22px 26px">' +
+        '<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>' +
+          '<td style="vertical-align:middle">' +
+            '<span style="display:inline-block;width:34px;height:34px;line-height:34px;text-align:center;border-radius:9px;background:#FFFFFF;color:' +
+              accent + ';font-weight:800;font-size:14px;vertical-align:middle">PB</span>' +
+            '<span style="color:#FFFFFF;font-size:13px;font-weight:600;opacity:.9;vertical-align:middle;margin-left:10px">Billboard Rental Hub · Plan B Media</span>' +
+          '</td></tr></table>' +
+        '<div style="color:#FFFFFF;font-size:23px;font-weight:800;margin-top:14px;line-height:1.35">' + htmlEsc_(o.title) + '</div>' +
+        '<div style="color:#FFFFFF;font-size:13.5px;opacity:.92;margin-top:4px">' + htmlEsc_(o.subtitle || '') + '</div>' +
+      '</td></tr>' +
+      // เนื้อหา
+      '<tr><td style="background:' + MAIL.BG + ';padding:20px 18px 6px;border-left:1px solid ' + MAIL.LINE + ';border-right:1px solid ' + MAIL.LINE + '">' +
+        (o.stats && o.stats.length ? statCards_(o.stats) : '') + body +
+        (site ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:28px 0 8px"><tr><td align="center">' +
+          '<a href="' + htmlEsc_(site) + '" style="display:inline-block;background:' + MAIL.BRAND + ';color:#FFFFFF;text-decoration:none;' +
+          'font-weight:700;font-size:14px;padding:12px 26px;border-radius:10px">เปิดระบบ Billboard Rental Hub →</a></td></tr></table>' : '') +
+      '</td></tr>' +
+      // footer
+      '<tr><td style="background:#FFFFFF;border:1px solid ' + MAIL.LINE + ';border-top:none;border-radius:0 0 14px 14px;padding:14px 26px;' +
+        'font-size:11.5px;color:#94A3B8;line-height:1.6">' +
+        'อีเมลอัตโนมัติจากระบบ Billboard Rental Hub — กรุณาตรวจสอบกระแสเงินสดและจัดเตรียมเช็คให้ทันกำหนด<br>' +
+        'ยอดเงินของงวดรายปีใช้ Amount/Year · ราย 3 เดือนรวมยอดทุกเดือนในงวด · ข้อมูลจากชีต Contract_Master' +
+      '</td></tr>' +
+    '</table></div>';
   return { subject: subject, html: html };
 }
 
@@ -119,23 +207,52 @@ function sendEmail_(to, email) {
 
 /* ---------- 1) แจ้งเตือนล่วงหน้า 7 วัน / 3 วัน ---------- */
 
+function advanceTable_(title, color, note, rows) {
+  const total = rows.reduce(function (s, d) { return s + d.amount; }, 0);
+  return mailTable_(title, color, note,
+    [['วันที่ต้องจ่าย'], ['ผู้รับเงิน / Media Site'], ['สัญญา / การจ่าย'], ['สถานะ'], ['ยอดเงิน (บาท)', 'right']],
+    rows.map(function (d) {
+      const kind = d.payKind === 'cheque' ? 'เช็คลงวันที่' : 'ชำระตามสัญญา';
+      const span = d.months.length > 1 ? d.payment + ' · ' + d.months[0] + ' – ' + d.months[d.months.length - 1] : d.payment;
+      return [
+        '<div style="font-weight:800;white-space:nowrap">' + fmtThDate_(d.payDate) + '</div>' +
+          '<div style="font-size:11.5px;color:' + MAIL.MUTED + ';margin-top:3px">' + kind + '</div>',
+        vendorCell_(d),
+        contractCell_(d, span),
+        statusPill_(d.payStatus),
+        moneyCell_(d.amount)
+      ];
+    }), 'รวม ' + rows.length + ' รายการ', total);
+}
+
 /** อีเมลแจ้งเตือนล่วงหน้าของวันนี้ — คืน null ถ้าไม่มีรายการ */
 function advanceEmail_() {
   const groups = payGroups_(readRentals_()).filter(function (g) { return g.amount && g.payAlert !== 'prior'; });
   const offsets = alertOffsets_();
-  const sections = [], parts = [];
+  const today = todayISO_();
+  const colors = ['#D97706', '#DC2626', '#7C3AED'];
+  const sections = [], parts = [], stats = [];
+  let all = 0, allCount = 0;
   offsets.forEach(function (n, i) {
     const rows = groups.filter(function (g) { return g.daysToPay === n; }).sort(byPayDate_);
+    const sum = rows.reduce(function (s, d) { return s + d.amount; }, 0);
+    const color = n <= 3 ? '#DC2626' : colors[i] || '#D97706';
+    stats.push(['ครั้งที่ ' + (i + 1) + ' · อีก ' + n + ' วัน', rows.length + ' รายการ', fmtMoney_(sum) + ' บาท', color]);
     if (!rows.length) return;
-    const round = offsets.length > 1 ? 'ครั้งที่ ' + (i + 1) + ' · ' : '';
+    all += sum; allCount += rows.length;
     parts.push('อีก ' + n + ' วัน ' + rows.length);
-    sections.push(alertTable_(round + 'ครบกำหนดจ่ายในอีก ' + n + ' วัน (' + fmtThDate_(addDays_(todayISO_(), n)) + ')',
-                              n <= 3 ? '#DC2626' : '#D97706', rows));
+    sections.push(advanceTable_('ครั้งที่ ' + (i + 1) + ' — ครบกำหนดในอีก ' + n + ' วัน', color,
+      'วันที่ต้องจ่าย ' + fmtThDate_(addDays_(today, n)), rows));
   });
   if (!sections.length) return null;
-  const email = buildEmail_('⏰ [Billboard Rental] แจ้งเตือนดิวจ่ายล่วงหน้า — ' + parts.join(' · ') + ' รายการ',
-    'แจ้งเตือนล่วงหน้า ' + offsets.map(function (n, i) { return 'ครั้งที่ ' + (i + 1) + ' ก่อน ' + n + ' วัน'; }).join(' / ') +
-    ' · ตรวจสอบ ณ วันที่ ' + fmtThDate_(todayISO_()), sections);
+  stats.push(['ยอดรวมที่ต้องเตรียม', fmtMoney_(all), allCount + ' รายการ', MAIL.INK]);
+  const email = buildEmail_('⏰ [Billboard Rental] แจ้งเตือนดิวจ่ายล่วงหน้า — ' + parts.join(' · ') + ' รายการ', {
+    title: 'แจ้งเตือนดิวจ่ายล่วงหน้า',
+    subtitle: offsets.map(function (n, i) { return 'ครั้งที่ ' + (i + 1) + ' ก่อน ' + n + ' วัน'; }).join(' · ') +
+              ' · ข้อมูล ณ วันที่ ' + fmtThDate_(today),
+    stats: stats,
+    sections: sections
+  });
   email.summary = parts.join(', ');
   return email;
 }
@@ -144,7 +261,7 @@ function advanceEmail_() {
 
 /**
  * งานทั้งหมดของเดือน ym ('yyyy-MM') ตามวันชำระตามสัญญา — ทั้งเบิกแล้ว/รอเบิก
- * รวมแถวรายเดือนที่ใช้วันชำระเดียวกันเป็นงวดเดียว (ราย 3 เดือน / รายปี)
+ * รวมแถวรายเดือนที่ใช้วันชำระเดียวกันเป็นงวดเดียว (ราย 3 เดือน / รายปี — ยอดตาม cycleAmount_)
  */
 function monthGroups_(data, ym) {
   const map = {};
@@ -157,36 +274,32 @@ function monthGroups_(data, ym) {
                    memoInv: d.memoInv, payStatus: d.payStatus, amount: 0, months: [] };
     }
     const g = map[key];
-    g.amount += d.installment;
+    addToCycle_(g, d);
     g.months.push(d.month);
     if (d.payStatus !== PAY_DONE) g.payStatus = d.payStatus || 'รอเบิก';
     if (!g.chequeDate && d.chequeDate) g.chequeDate = d.chequeDate;
     if (!g.memoInv && d.memoInv) g.memoInv = d.memoInv;
   });
-  return Object.keys(map).map(function (k) { return map[k]; })
+  return Object.keys(map).map(function (k) { const g = map[k]; g.amount = cycleAmount_(g); return g; })
     .sort(function (a, b) { return a.dueDate < b.dueDate ? -1 : a.dueDate > b.dueDate ? 1 : (a.vendorName < b.vendorName ? -1 : 1); });
 }
 
-function monthTable_(title, color, rows) {
-  if (!rows.length) return '';
+function monthTable_(title, color, note, rows) {
   const total = rows.reduce(function (s, d) { return s + d.amount; }, 0);
-  return '<h3 style="margin:22px 0 8px;font-size:15px;color:' + color + '">' + htmlEsc_(title) +
-    ' (' + rows.length + ' รายการ · ' + fmtMoney_(total) + ' บาท)</h3>' +
-    '<table style="border-collapse:collapse;width:100%;font-family:Arial,sans-serif">' +
-    '<tr><th ' + MAIL_TH + '>ชำระตามสัญญา</th><th ' + MAIL_TH + '>ผู้รับเงิน (Vendor)</th><th ' + MAIL_TH + '>Media Site</th>' +
-    '<th ' + MAIL_TH + '>Contract No. / การจ่าย</th><th ' + MAIL_TH + '>เช็คลงวันที่ / MEMO-INV</th>' +
-    '<th ' + MAIL_TH + ' align="right">ยอดเงิน (บาท)</th></tr>' +
+  return mailTable_(title, color, note,
+    [['ชำระตามสัญญา'], ['ผู้รับเงิน / Media Site'], ['สัญญา / การจ่าย'], ['เช็คลงวันที่ · MEMO/INV'], ['ยอดเงิน (บาท)', 'right']],
     rows.map(function (d) {
-      const span = d.months.length > 1 ? ' (' + d.months[0] + ' – ' + d.months[d.months.length - 1] + ')' : '';
-      return '<tr><td ' + MAIL_TD + '><b>' + fmtThDate_(d.dueDate) + '</b></td>' +
-        '<td ' + MAIL_TD + '><b>' + htmlEsc_(d.vendorName || '-') + '</b></td>' +
-        '<td ' + MAIL_TD + '>' + htmlEsc_(d.mediaSite || '-') + '</td>' +
-        '<td ' + MAIL_TD + '>' + htmlEsc_(d.contractNo || '-') + '<br><span style="color:#64748B;font-size:12px">' +
-          htmlEsc_(d.payment + span) + '</span></td>' +
-        '<td ' + MAIL_TD + '>' + (d.chequeDate ? fmtThDate_(d.chequeDate) : '-') + '<br><span style="color:#64748B;font-size:12px">' +
-          htmlEsc_(d.memoInv || '-') + '</span></td>' +
-        '<td ' + MAIL_TD + ' align="right"><b>' + fmtMoney_(d.amount) + '</b></td></tr>';
-    }).join('') + '</table>';
+      const span = d.months.length > 1 ? d.payment + ' · ' + d.months[0] + ' – ' + d.months[d.months.length - 1] : d.payment;
+      return [
+        '<div style="font-weight:800;white-space:nowrap">' + fmtThDate_(d.dueDate) + '</div>' +
+          '<div style="margin-top:4px">' + statusPill_(d.payStatus) + '</div>',
+        vendorCell_(d),
+        contractCell_(d, span),
+        '<div style="white-space:nowrap">' + (d.chequeDate ? fmtThDate_(d.chequeDate) : '<span style="color:' + MAIL.MUTED + '">-</span>') + '</div>' +
+          '<div style="font-size:12px;color:' + MAIL.MUTED + ';margin-top:2px">' + htmlEsc_(d.memoInv || '-') + '</div>',
+        d.amount ? moneyCell_(d.amount) : '<span style="color:#B91C1C;font-size:12px;font-weight:700">ไม่มียอดในชีต</span>'
+      ];
+    }), 'รวม ' + rows.length + ' รายการ', total);
 }
 
 /** อีเมลสรุปงานของเดือน ym — ส่งได้แม้ไม่มีรายการ (แจ้งว่าไม่มี) */
@@ -194,14 +307,23 @@ function monthlyEmail_(ym) {
   const rows = monthGroups_(readRentals_(), ym);
   const wait = rows.filter(function (g) { return g.payStatus !== PAY_DONE; });
   const done = rows.filter(function (g) { return g.payStatus === PAY_DONE; });
-  const total = rows.reduce(function (s, g) { return s + g.amount; }, 0);
+  const sum = function (arr) { return arr.reduce(function (s, g) { return s + g.amount; }, 0); };
+  const total = sum(rows);
   const label = thMonthLabel_(ym);
-  const sections = rows.length
-    ? [monthTable_('รอเบิก', '#D97706', wait), monthTable_('เบิกแล้ว', '#059669', done)].filter(String)
-    : ['<p style="margin-top:18px">ไม่มีรายการที่ครบกำหนดชำระในเดือน ' + htmlEsc_(label) + '</p>'];
-  const email = buildEmail_('📅 [Billboard Rental] สรุปงานเดือน' + label + ' — ' + rows.length + ' รายการ · ' + fmtMoney_(total) + ' บาท',
-    'รายการค่าเช่าที่ครบกำหนดชำระตามสัญญาในเดือน' + label + ' ทั้งหมด (รอเบิก ' + wait.length + ' · เบิกแล้ว ' + done.length + ')' +
-    ' · ข้อมูล ณ วันที่ ' + fmtThDate_(todayISO_()), sections);
+  const email = buildEmail_('📅 [Billboard Rental] สรุปงานเดือน' + label + ' — ' + rows.length + ' รายการ · ' + fmtMoney_(total) + ' บาท', {
+    title: 'สรุปงานเดือน' + label,
+    subtitle: 'รายการค่าเช่าที่ครบกำหนดชำระตามสัญญาในเดือน' + label + ' ทั้งหมด · ข้อมูล ณ วันที่ ' + fmtThDate_(todayISO_()),
+    stats: [
+      ['รายการทั้งหมด', rows.length + ' รายการ', 'ยอดรวม ' + fmtMoney_(total) + ' บาท', MAIL.INK],
+      ['รอเบิก', wait.length + ' รายการ', fmtMoney_(sum(wait)) + ' บาท', '#D97706'],
+      ['เบิกแล้ว', done.length + ' รายการ', fmtMoney_(sum(done)) + ' บาท', '#059669']
+    ],
+    sections: [
+      wait.length ? monthTable_('รอเบิก', '#D97706', 'ยังไม่ได้เบิกจ่าย — เรียงตามวันชำระตามสัญญา', wait) : '',
+      done.length ? monthTable_('เบิกแล้ว', '#059669', 'เบิกจ่ายแล้ว — ตรวจวันที่เช็คให้ตรงกำหนด', done) : ''
+    ],
+    empty: 'ไม่มีรายการที่ครบกำหนดชำระในเดือน' + label
+  });
   email.count = rows.length;
   email.summary = 'สรุปเดือน ' + ym + ' ' + rows.length + ' รายการ';
   return email;
@@ -232,13 +354,18 @@ function dailyAlertCheck() {
   return 'ส่งแล้ว: ' + done.join(' | ') + ' → ' + to.join(', ');
 }
 
+function noAdvanceEmail_() {
+  return buildEmail_('(วันนี้ไม่มีรายการแจ้งเตือนล่วงหน้า)', {
+    title: 'แจ้งเตือนดิวจ่ายล่วงหน้า',
+    subtitle: 'ข้อมูล ณ วันที่ ' + fmtThDate_(todayISO_()),
+    empty: 'วันนี้ไม่มีรายการที่ครบกำหนดในอีก ' + alertOffsets_().join(' / ') + ' วัน'
+  });
+}
+
 /** ทดสอบ: ส่งตัวอย่างแจ้งเตือนล่วงหน้าของวันนี้ให้ CFG.ADMIN_EMAIL คนเดียว */
 function testAlertEmail() {
   invalidateData_();
-  const adv = advanceEmail_() ||
-    buildEmail_('[ทดสอบ] Billboard Rental — แจ้งเตือนล่วงหน้า', 'วันนี้ไม่มีรายการที่ครบกำหนดในอีก ' +
-                alertOffsets_().join(' / ') + ' วัน', ['<p style="margin-top:18px">ไม่มีรายการ</p>']);
-  sendEmail_([CFG.ADMIN_EMAIL], adv);
+  sendEmail_([CFG.ADMIN_EMAIL], advanceEmail_() || noAdvanceEmail_());
   Logger.log('ส่งอีเมลทดสอบ → ' + CFG.ADMIN_EMAIL);
 }
 
@@ -300,8 +427,7 @@ function apiPreviewEmail_(token, p) {
   invalidateData_();
   const email = p.type === 'monthly'
     ? monthlyEmail_(/^\d{4}-\d{2}$/.test(p.month || '') ? p.month : todayISO_().slice(0, 7))
-    : (advanceEmail_() || buildEmail_('(วันนี้ไม่มีรายการแจ้งเตือนล่วงหน้า)',
-        'ไม่มีรายการที่ครบกำหนดในอีก ' + alertOffsets_().join(' / ') + ' วัน', []));
+    : (advanceEmail_() || noAdvanceEmail_());
   return { ok: true, subject: email.subject, html: email.html, to: alertRecipients_() };
 }
 

@@ -17,6 +17,24 @@ function monthIndex_(ym) {
 }
 
 /**
+ * ยอดเงินของ 1 งวด
+ *   ปกติ = ผลรวมแถวรายเดือนที่ใช้วันชำระเดียวกัน
+ *   รายปี = Amount/Year (ยอดเช็คจริงทั้งปี) — ชีตของปีนี้มีเฉพาะบางเดือนของงวดนั้น
+ *           เช่น รายปีครบ 03/04/2026 มีแค่แถว Jan–Mar-26 ถ้ารวมแถวจะได้แค่ 3 เดือน
+ */
+function cycleAmount_(g) {
+  const amt = g.freq === 'yearly' && g.yearAmount > 0 ? g.yearAmount : g.amount;
+  return Math.round(amt * 100) / 100;
+}
+
+/** รวมยอดของแถวเข้ากับงวด (ใช้ร่วมกันทุกจุดที่จัดกลุ่มงวด) */
+function addToCycle_(g, d) {
+  g.amount += d.installment;
+  g.freq = g.freq || d.freq;
+  g.yearAmount = Math.max(g.yearAmount || 0, d.amountYear || 0);
+}
+
+/**
  * งวดการจ่าย = แถวที่มี "วันที่ต้องจ่าย" เดียวกันของคู่สัญญา/ทำเล/สัญญาเดียวกัน
  * (ราย 3 เดือน 3 แถว และรายปี 12 แถว ใช้วันชำระเดียวกัน — รวมเป็นงวดเดียว)
  */
@@ -34,7 +52,7 @@ function payGroups_(data) {
       };
     }
     const g = map[key];
-    g.amount += d.installment;
+    addToCycle_(g, d);
     g.months.push(d.month);
     g.rows.push(d.id);
     // งวดถือว่ายังไม่เบิก ถ้ามีแถวใดยังรอเบิก
@@ -42,21 +60,24 @@ function payGroups_(data) {
   });
   return Object.keys(map).map(function (k) {
     const g = map[k];
-    g.amount = Math.round(g.amount * 100) / 100;
+    g.amount = cycleAmount_(g);
     return g;
   }).sort(function (a, b) { return a.payDate < b.payDate ? -1 : a.payDate > b.payDate ? 1 : 0; });
 }
 
-/** ค่าเช่าที่ต้องจ่ายรายเดือน 12 เดือนข้างหน้า — รวมยอดตามเดือนของวันที่ต้องจ่ายจริง */
+/** ค่าเช่าที่ต้องจ่ายรายเดือน 12 เดือนข้างหน้า — รวมยอดงวดตามเดือนของวันชำระตามสัญญา */
 function forecast_(data) {
   const months = nextMonths_(12);
   const sum = {};
   months.forEach(function (k) { sum[k] = 0; });
+  const cycles = {};
   data.forEach(function (d) {
-    if (!d.installment || !d.dueDate) return;
-    const k = d.dueDate.slice(0, 7);
-    if (k in sum) sum[k] += d.installment;
+    if (!d.installment || !d.dueDate || !(d.dueDate.slice(0, 7) in sum)) return;
+    const key = [d.contractNo, d.vendorNo, d.mediaSite, d.dueDate].join('|');
+    if (!cycles[key]) cycles[key] = { month: d.dueDate.slice(0, 7), amount: 0 };
+    addToCycle_(cycles[key], d);
   });
+  Object.keys(cycles).forEach(function (k) { sum[cycles[k].month] += cycleAmount_(cycles[k]); });
   return months.map(function (k) { return { label: k, value: Math.round(sum[k]) }; });
 }
 
