@@ -17,8 +17,8 @@
    | Key | ค่า |
    |---|---|
    | `ANTHROPIC_API_KEY` | คีย์ Claude API (ผู้ช่วย AI) |
-   | `NOTICE_EMAILS` | ผู้รับอีเมลเตือน คั่นด้วย `,` (ค่าเริ่มต้น pitinan.yo@planbmedia.co.th) |
-   | `ALERT_OFFSETS` | เตือนล่วงหน้ากี่วัน เช่น `7,3` (ค่าเริ่มต้น 3) |
+   | `NOTICE_EMAILS` | ผู้รับอีเมลเตือน คั่นด้วย `,` (ค่าเริ่มต้น pitinan.yo@, vanidarat.si@, jiraporn@planbmedia.co.th) |
+   | `ALERT_OFFSETS` | เตือนล่วงหน้ากี่วัน (ค่าเริ่มต้น `7,3` = ครั้งที่ 1 ก่อน 7 วัน · ครั้งที่ 2 ก่อน 3 วัน) |
    | `SITE_URL` | ลิงก์หน้าเว็บ Vercel (ใส่ปุ่มในอีเมล) |
 7. อีเมลเตือน: รัน `installAlertTrigger` (ลบ trigger `sendPaymentAlertEmails` ของโค้ดเดิมให้เอง)
 8. **Deploy → New deployment → Web app** · Execute as: **Me** · Who has access: **Anyone** → คัดลอก URL ที่ลงท้าย `/exec`

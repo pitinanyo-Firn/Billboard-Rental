@@ -22,7 +22,7 @@
 | **Apps Script** | [Billboard Rental](https://script.google.com/home/projects/1-6nGq5g24XJjqjqgTfWYgiQyLfzQyvVxeLUZuaBXVlqh1vG6XymqgZVS/edit) · Version 47 |
 | **ผู้ดูแลระบบ** | `admin-rental` / `P@ssword` — เปลี่ยนรหัสหลังเข้าใช้ครั้งแรก |
 
-ยังไม่ได้เปิด: อีเมลแจ้งเตือนอัตโนมัติ (รัน `installAlertTrigger` ใน Apps Script) · ผู้ช่วย AI (ต้องตั้ง Script property `ANTHROPIC_API_KEY`)
+ยังไม่ได้เปิด: ผู้ช่วย AI (ต้องตั้ง Script property `ANTHROPIC_API_KEY`)
 
 ---
 ## Architecture
@@ -56,7 +56,7 @@
 | **ตรวจสอบข้อมูล** | ตรวจทุกแถวใน `Contract_Master` · แก้อัตโนมัติได้: วันที่เขียนเป็น ด/ว/ป, คำสะกดผิด, ช่องว่างเกิน |
 | **✦ ผู้ช่วย AI** | ถามเป็นภาษาไทย เช่น "เดือนหน้าต้องเตรียมเงินจ่ายค่าเช่ารวมเท่าไหร่" |
 | **สมาชิก** | admin เพิ่ม/แก้สิทธิ์/ปิดใช้งาน/รีเซ็ตรหัสผ่าน/ลบผู้ใช้จากหน้าเว็บ · เข้าสู่ระบบด้วยอีเมลหรือชื่อผู้ใช้ |
-| **อีเมลเตือน** | ทุกวัน 08:00 เมื่อเหลือ 3 วันถึงวันที่ต้องจ่าย + สรุปรายการเลยกำหนดทุกวันจันทร์ ([`Alert.gs`](backend/Alert.gs)) |
+| **อีเมลเตือน** | ตรวจทุกวัน 08:00 · ① แจ้งเตือนล่วงหน้า ครั้งที่ 1 ก่อนกำหนด 7 วัน ครั้งที่ 2 ก่อน 3 วัน · ② วันที่ 1 ของเดือน สรุปงานทั้งหมดของเดือนนั้น · ผู้รับ pitinan.yo@, vanidarat.si@, jiraporn@ · ดูตัวอย่าง/ส่งเองได้จากแท็บครบกำหนดจ่าย ([`Alert.gs`](backend/Alert.gs)) |
 | **ซิงค์สองทาง** | แก้บนเว็บ → เขียนชีตทันที · แก้ในชีต → หน้าเว็บอัปเดตเองภายใน ~45 วินาที |
 | **Export** | CSV พร้อม BOM (Excel ภาษาไทยไม่เพี้ยน) |
 
@@ -111,7 +111,9 @@
 | `updateReceipt` / `deleteReceipt` | `token`, `id`, `timestamp`, `vendor`, `status?` (admin) | `{ok}` |
 | `previewFixes` / `applyFixes` | `token` (admin) | `{ok, fixes}` / `{ok, applied, skipped}` |
 | `getAlertSettings` | `token` | `{ok, triggerOn, hour, offsets, recipientCount, recipients}` |
-| `sendAlertNow` | `token`, `toSelf` (admin) | `{ok, sent, to}` |
+| `sendAlertNow` | `token`, `type` (`advance`/`monthly`), `month`, `toSelf` (admin) | `{ok, subject, to}` |
+| `previewEmail` | `token`, `type`, `month` (admin) | `{ok, subject, html, to}` |
+| `installAlerts` | `token` (admin) | สถานะการแจ้งเตือน |
 | `exportCSV` / `clearCache` | `token` | `{ok, csv}` / `{ok}` |
 | `getMembers` | `token` (admin) | `{ok, me, members}` |
 | `addMember` | `token`, `email`, `name`, `role`, `password?`, … (admin) | `{ok, email, tempPassword}` |
