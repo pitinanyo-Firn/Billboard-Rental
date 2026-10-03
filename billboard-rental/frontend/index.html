@@ -193,7 +193,7 @@
         <div class="card-head">
           <h2>📝 สร้างข้อมูลสัญญาใหม่ (New Contract)</h2>
           <div class="spacer"></div>
-          <span class="cell-mute">บันทึกลงแท็บ New_Contract ใน Google Sheet · 1 Location = 1 แถว</span>
+          <span class="cell-mute">เพิ่มลงชีต Contract_Master ต่อท้ายเดือนที่เลือก เป็นลำดับถัดไป · 1 Location = 1 แถว</span>
         </div>
         <div id="ncError" class="alert-msg hidden"></div>
         <form id="ncForm" novalidate>
@@ -262,6 +262,10 @@
           <datalist id="dlNcMedia"></datalist>
 
           <div class="nc-actions">
+            <label class="nc-month" for="ncMonth">บันทึกลงเดือน (Month)
+              <input id="ncMonth" type="month">
+            </label>
+            <em class="edit-err" data-err="month"></em>
             <span class="cell-mute" id="ncTotal"></span>
             <div class="spacer"></div>
             <button type="button" class="btn btn-ghost" id="btnNcReset">ล้างฟอร์ม</button>
@@ -278,7 +282,7 @@
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>วันที่บันทึก</th><th>Contract No.</th><th>บริษัท / ผู้ขาย</th><th>PR / PO</th><th>Start – End</th><th>Payment</th><th>Location</th><th class="num">ค่าเช่าตามสัญญา (บาท)</th><th></th></tr></thead>
+            <thead><tr><th>วันที่บันทึก</th><th>เดือน / ลำดับ</th><th>Contract No.</th><th>บริษัท / ผู้ขาย</th><th>PR / PO</th><th>Start – End</th><th>Payment</th><th>Location</th><th class="num">ค่าเช่าตามสัญญา (บาท)</th><th></th></tr></thead>
             <tbody id="ncBody"></tbody>
           </table>
         </div>
