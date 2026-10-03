@@ -344,6 +344,46 @@
           </table>
         </div>
       </div>
+
+      <!-- หน้าต่างการเบิก: รอเบิก / เบิกแล้ว แยกรายเดือน / ราย 3 เดือน / รายปี -->
+      <div class="card" id="wdCard">
+        <div class="card-head">
+          <h2>หน้าต่างการเบิก</h2>
+          <div class="seg wd-view">
+            <label><input type="radio" name="wdView" value="wait" checked><span>รอเบิก <b id="wdCntWait"></b></span></label>
+            <label><input type="radio" name="wdView" value="done"><span>เบิกแล้ว <b id="wdCntDone"></b></span></label>
+          </div>
+          <div class="spacer"></div>
+          <label class="nc-month" for="wdMonth">เดือนที่ต้องจ่าย
+            <select id="wdMonth" class="st-input"></select>
+          </label>
+        </div>
+        <div class="wd-types" id="wdTypes"></div>
+        <div class="wd-bar hidden" id="wdBar">
+          <span id="wdSel">เลือก 0 งวด</span>
+          <input id="wdMemo" class="st-input" placeholder="MEMO/INV No. (ไม่บังคับ)" maxlength="100">
+          <div class="spacer"></div>
+          <button class="btn btn-primary btn-sm" id="btnWdApply" style="width:auto">✓ ทำเครื่องหมายเบิกแล้ว</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="wd-chk"><input type="checkbox" id="wdAll" title="เลือกทั้งหมด"></th>
+                <th>วันที่ต้องจ่าย</th>
+                <th>ผู้รับเงิน (Vendor)</th>
+                <th>Media Site</th>
+                <th>เลขที่สัญญา</th>
+                <th>การจ่าย / รอบ</th>
+                <th class="num">ยอดเบิก (บาท)</th>
+                <th id="wdColExtra">เหลือ (วัน)</th>
+                <th>Status Payment</th>
+              </tr>
+            </thead>
+            <tbody id="wdBody"></tbody>
+          </table>
+        </div>
+      </div>
     </section>
 
     <!-- ---------- PAYMENTS / RECEIPTS ---------- -->
