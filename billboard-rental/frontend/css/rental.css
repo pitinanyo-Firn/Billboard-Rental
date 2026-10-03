@@ -34,23 +34,16 @@
 .check{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-2);cursor:pointer}
 .check input{width:16px;height:16px;accent-color:var(--brand)}
 .dup-tag{display:inline-block;margin-left:6px;padding:0 7px;border-radius:99px;background:#FFFBEB;color:#B45309;font-size:11px;font-weight:700}
-#receiptBody tr,#payBody tr,#pickBody tr{cursor:default}
+#receiptBody tr,#payBody tr{cursor:default}
 
-/* ---------- บันทึกการเบิกจ่าย: รายการค่าเช่า ---------- */
-.pay-label{font-weight:700;font-size:13.5px;margin:4px 0 10px}
-.pay-label .cell-mute{font-weight:400}
-.pay-filter{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:12px}
-.pay-filter .st-select{max-width:300px}
-.pay-filter .st-input{flex:1 1 280px;min-width:220px}
-.pay-count{display:inline-block;padding:6px 12px;border-radius:99px;background:var(--brand);color:#fff;font-weight:700;font-size:12.5px;white-space:nowrap}
-.pick-amt{width:140px;text-align:right}
-.pick-act{white-space:nowrap}
-.pick-act .btn{width:auto;margin-left:4px}
-#pickBody td{vertical-align:middle}
-#pickBody tr.pick-focus td{background:#FFF1F3}
-.pay-opts{display:flex;flex-wrap:wrap;align-items:flex-end;gap:16px;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
-.pay-opts .field{flex:1 1 320px;margin:0}
-.card.folded .pay-opts{display:none}
+/* ---------- บันทึกการเบิกจ่าย: ตัวกรองรายการค่าเช่า ---------- */
+.pay-filter{display:grid;grid-template-columns:minmax(200px,1fr) minmax(200px,1fr) minmax(260px,1.6fr);gap:12px}
+.pay-filter select,.pay-filter input{width:100%}
+.pay-hint{margin-top:6px;font-size:12.5px;color:var(--muted)}
+.pay-hint b{color:var(--ink)}
+.pay-hint .pay-count{display:inline-block;padding:1px 9px;margin-right:6px;border-radius:99px;background:var(--brand);color:#fff;font-weight:700}
+.pay-check{width:100%;height:46px;white-space:nowrap}
+@media (max-width:760px){ .pay-filter{grid-template-columns:1fr} }
 .rc-actions{display:flex;gap:6px;justify-content:flex-end}
 
 .d-prior{background:#A8A29E}
