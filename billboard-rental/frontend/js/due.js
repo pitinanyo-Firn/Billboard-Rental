@@ -90,7 +90,15 @@ const Due = {
       this.wdRows().forEach(g => on ? this.wd.sel.add(g.id) : this.wd.sel.delete(g.id));
       this.renderWithdraw();
     });
-    $('btnWdApply').addEventListener('click', () => this.setStatus());
+    $('btnWdApply').addEventListener('click', () => this.setStatus(this.WD_ACTIONS[this.wd.view].apply));
+    $('btnWdBack').addEventListener('click', () => this.setStatus(this.WD_ACTIONS[this.wd.view].back));
+  },
+
+  /** ปุ่มของแต่ละมุมมอง: apply = ปุ่มหลัก (ขั้นถัดไป) · back = ย้อนกลับขั้นก่อนหน้า */
+  WD_ACTIONS: {
+    wait: { apply: 'เบิกแล้ว', applyLabel: '✓ ทำเครื่องหมายเบิกแล้ว', back: '',         backLabel: '' },
+    done: { apply: 'จ่ายแล้ว', applyLabel: '💰 จ่ายแล้ว',             back: 'รอเบิก',   backLabel: '↺ กลับเป็นรอเบิก' },
+    paid: { apply: '',         applyLabel: '',                        back: 'เบิกแล้ว', backLabel: '↺ กลับเป็นเบิกแล้ว' }
   },
 
   /** ประเภทการจ่ายของงวด: monthly | quarterly | yearly | other */
@@ -103,12 +111,13 @@ const Due = {
     return 'other';
   },
 
-  /** งวดทั้งหมดของมุมมอง: รอเบิก = งวดที่ยังต้องจ่าย (ไม่รวมงวดของปีก่อน) · เบิกแล้ว = paidGroups จาก backend */
+  /** งวดทั้งหมดของมุมมอง: รอเบิก = งวดที่ยังไม่เบิก (ไม่รวมงวดของปีก่อน)
+      เบิกแล้ว / จ่ายแล้ว = paidGroups จาก backend แยกตามสถานะ */
   wdAllOf(view) {
     if (!Store.data) return [];
-    return view === 'done'
-      ? (Store.data.paidGroups || [])
-      : (Store.data.payGroups || []).filter(g => g.payAlert !== 'prior' && g.payStatus !== 'เบิกแล้ว');
+    if (view === 'done') return (Store.data.paidGroups || []).filter(g => g.payStatus === 'เบิกแล้ว');
+    if (view === 'paid') return (Store.data.paidGroups || []).filter(g => g.payStatus === 'จ่ายแล้ว');
+    return (Store.data.payGroups || []).filter(g => g.payAlert !== 'prior' && g.payStatus !== 'เบิกแล้ว' && g.payStatus !== 'จ่ายแล้ว');
   },
 
   /** งวดในมุมมอง + เดือนที่เลือก (ก่อนกรองประเภท) */
@@ -120,7 +129,7 @@ const Due = {
   wdRows() {
     const t = this.wd.type;
     const rows = this.wdBase(this.wd.view).filter(g => t === 'all' || this.freqOf(g) === t);
-    return this.wd.view === 'done'
+    return this.wd.view !== 'wait'
       ? rows.sort((a, b) => String(b.payDate).localeCompare(String(a.payDate)))
       : rows.sort((a, b) => a.daysToPay - b.daysToPay);
   },
@@ -128,7 +137,7 @@ const Due = {
   renderWithdraw() {
     if (!Store.data) return;
     const w = this.wd;
-    const done = w.view === 'done';
+    const done = w.view !== 'wait';     // เบิกแล้ว / จ่ายแล้ว แสดง MEMO/INV แทนวันที่เหลือ
     const admin = Store.isAdmin();
 
     // ตัวเลือกเดือน (จากวันที่ต้องจ่ายของงวดในมุมมองนี้)
@@ -143,6 +152,7 @@ const Due = {
 
     $('wdCntWait').textContent = this.wdBase('wait').length;
     $('wdCntDone').textContent = this.wdBase('done').length;
+    $('wdCntPaid').textContent = this.wdBase('paid').length;
 
     // การ์ดประเภท: จำนวนงวด + ยอดรวม
     const base = this.wdBase(w.view);
@@ -169,7 +179,7 @@ const Due = {
     document.querySelectorAll('#wdCard .wd-chk').forEach(el => el.classList.toggle('hidden', !admin));
     const tb = $('wdBody');
     if (!rows.length) {
-      tb.innerHTML = `<tr><td colspan="9"><div class="empty">${done ? 'ยังไม่มีรายการที่เบิกแล้ว' : 'ไม่มีรายการรอเบิก'}</div></td></tr>`;
+      tb.innerHTML = `<tr><td colspan="9"><div class="empty">${w.view === 'paid' ? 'ยังไม่มีรายการที่จ่ายแล้ว' : done ? 'ยังไม่มีรายการที่เบิกแล้ว' : 'ไม่มีรายการรอเบิก'}</div></td></tr>`;
     } else {
       tb.innerHTML = rows.map(g => `
         <tr data-id="${g.id}" class="${w.sel.has(g.id) ? 'wd-picked' : ''}">
@@ -205,24 +215,27 @@ const Due = {
     $('wdBar').classList.toggle('hidden', !admin || !picked.length);
     $('wdSel').textContent = `เลือก ${picked.length} งวด · ${fmtMoney(picked.reduce((s, g) => s + g.amount, 0))} บาท`;
     $('wdMemo').classList.toggle('hidden', done);
-    $('btnWdApply').textContent = done ? `↺ กลับเป็นรอเบิก (${picked.length})` : `✓ ทำเครื่องหมายเบิกแล้ว (${picked.length})`;
+    const a = this.WD_ACTIONS[w.view];
+    $('btnWdApply').classList.toggle('hidden', !a.apply);
+    $('btnWdApply').textContent = `${a.applyLabel} (${picked.length})`;
+    $('btnWdBack').classList.toggle('hidden', !a.back);
+    $('btnWdBack').textContent = `${a.backLabel} (${picked.length})`;
   },
 
-  async setStatus() {
+  async setStatus(status) {
     const w = this.wd;
     const picked = this.wdRows().filter(g => w.sel.has(g.id));
-    if (!picked.length) return;
-    const status = w.view === 'done' ? 'รอเบิก' : 'เบิกแล้ว';
+    if (!picked.length || !status) return;
     const memoInv = status === 'เบิกแล้ว' ? $('wdMemo').value.trim() : '';
     const sum = fmtMoney(picked.reduce((s, g) => s + g.amount, 0));
     if (!confirm(`เปลี่ยน Status Payment ของ ${picked.length} งวด (${sum} บาท) เป็น "${status}"?`)) return;
-    const btn = $('btnWdApply');
-    btn.disabled = true;
+    const btns = [$('btnWdApply'), $('btnWdBack')];
+    btns.forEach(b => { b.disabled = true; });
     const r = await apiGuarded('setPayStatus', {
       groups: picked.map(g => ({ contractNo: g.contractNo, rows: g.rows })),
       status, memoInv
     });
-    btn.disabled = false;
+    btns.forEach(b => { b.disabled = false; });
     if (!r) return;
     w.sel.clear();
     $('wdMemo').value = '';

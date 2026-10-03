@@ -58,7 +58,7 @@ const Dashboard = {
       ['k-total',  'รายการค่าเช่า',          fmtNum(k.total),        `${fmtNum(k.contracts)} สัญญา · ${fmtNum(k.rows)} แถวรายเดือน`],
       ['k-total',  'ค่าเช่าต่อเดือน',         fmtNum(k.monthlyCost),  k.monthLabel ? `บาท · รอบ ${k.monthLabel}` : 'บาท (เฉลี่ยทั้งปี)'],
       ['k-new',    'ค่าเช่าต่อปี',            fmtNum(k.annualCost),   'บาท (รวมทั้งปีตามชีต)'],
-      ['k-active', 'เบิกแล้ว',               fmtNum(k.paid),         'แถวรายเดือน'],
+      ['k-active', 'เบิก / จ่ายแล้ว',        fmtNum(k.paid),         'แถวรายเดือน'],
       ['k-warn',   'รอเบิก',                 fmtNum(k.waiting),      'แถวรายเดือน'],
       ['k-crit',   'เลยกำหนดจ่าย',           fmtNum(k.overdue),      'งวดที่ยังไม่เบิก'],
       ['k-warn',   'ครบกำหนดใน ' + Store.data.dueSoonDays + ' วัน', fmtNum(k.dueSoon), `${fmtMoney(k.dueAmount)} บาท รวมที่เลยกำหนด`],
@@ -115,7 +115,7 @@ const Dashboard = {
       data: {
         labels: labels(media),
         datasets: [
-          { label: 'เบิกแล้ว', data: media.map(r => r.paid), backgroundColor: '#059669', borderRadius: 4, maxBarThickness: 22 },
+          { label: 'เบิก / จ่ายแล้ว', data: media.map(r => r.paid), backgroundColor: '#059669', borderRadius: 4, maxBarThickness: 22 },
           { label: 'รอเบิก',  data: media.map(r => r.wait), backgroundColor: '#D97706', borderRadius: 4, maxBarThickness: 22 }
         ]
       },

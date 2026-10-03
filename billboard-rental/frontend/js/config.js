@@ -23,7 +23,7 @@ const CONFIG = {
     due3:    'ภายใน 3 วัน',
     soon:    'ใกล้ครบกำหนด',
     normal:  'ยังไม่ถึงกำหนด',
-    paid:    'เบิกแล้ว',
+    paid:    'เบิกแล้ว / จ่ายแล้ว',
     prior:   'งวดของปีก่อน (ตรวจสถานะ)',
     unknown: 'ไม่ระบุวันที่'
   },
@@ -39,11 +39,12 @@ const CONFIG = {
   /** สี badge ตาม Status Payment ในชีต */
   STATUS_CLASS: {
     'เบิกแล้ว': 'b-ok',
-    'รอเบิก':   'b-warn'
+    'รอเบิก':   'b-warn',
+    'จ่ายแล้ว': 'b-info'
   },
 
   /** ตัวเลือก Status Payment (ต้องตรงกับ PAY_STATUSES ใน backend/Config.gs) */
-  PAY_STATUSES: ['เบิกแล้ว', 'รอเบิก'],
+  PAY_STATUSES: ['เบิกแล้ว', 'รอเบิก', 'จ่ายแล้ว'],
 
   /** ป้ายระดับปัญหาข้อมูล */
   LEVEL_LABEL: { high: 'สำคัญ', medium: 'ควรตรวจ', low: 'เล็กน้อย' },
