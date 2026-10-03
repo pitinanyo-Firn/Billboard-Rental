@@ -89,7 +89,7 @@
           <div class="table-wrap">
             <table class="compact">
               <thead><tr><th>ประเภทสื่อ</th><th class="num">รายการ</th><th class="num">เบิกแล้ว / รอเบิก</th><th class="num">ค่าเช่าต่อปี (บาท)</th></tr></thead>
-              <tbody id="costByMedia"></tbody>
+              <tbody id="costByMedia" data-fold="20"></tbody>
             </table>
           </div>
         </div>
@@ -152,7 +152,7 @@
             <option value="due3">ภายใน 3 วัน</option>
             <option value="soon">ใกล้ครบกำหนด</option>
             <option value="normal">ยังไม่ถึงกำหนด</option>
-            <option value="paid">เบิกแล้ว</option>
+            <option value="paid">เบิกแล้ว / จ่ายแล้ว</option>
             <option value="prior">งวดของปีก่อน (ตรวจสถานะ)</option>
             <option value="unknown">ไม่ระบุวันที่</option>
           </select>
@@ -181,7 +181,7 @@
                 <th>สิ้นสุดสัญญา</th>
               </tr>
             </thead>
-            <tbody id="tbody"></tbody>
+            <tbody id="tbody" data-fold="50"></tbody>
           </table>
         </div>
       </div>
@@ -352,6 +352,7 @@
           <div class="seg wd-view">
             <label><input type="radio" name="wdView" value="wait" checked><span>รอเบิก <b id="wdCntWait"></b></span></label>
             <label><input type="radio" name="wdView" value="done"><span>เบิกแล้ว <b id="wdCntDone"></b></span></label>
+            <label><input type="radio" name="wdView" value="paid"><span>จ่ายแล้ว <b id="wdCntPaid"></b></span></label>
           </div>
           <div class="spacer"></div>
           <label class="nc-month" for="wdMonth">เดือนที่ต้องจ่าย
@@ -363,6 +364,7 @@
           <span id="wdSel">เลือก 0 งวด</span>
           <input id="wdMemo" class="st-input" placeholder="MEMO/INV No. (ไม่บังคับ)" maxlength="100">
           <div class="spacer"></div>
+          <button class="btn btn-ghost btn-sm hidden" id="btnWdBack" style="width:auto">↺ กลับเป็นรอเบิก</button>
           <button class="btn btn-primary btn-sm" id="btnWdApply" style="width:auto">✓ ทำเครื่องหมายเบิกแล้ว</button>
         </div>
         <div class="table-wrap">
@@ -617,6 +619,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="js/config.js"></script>
 <script src="js/api.js"></script>
+<script src="js/fold.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/dashboard.js"></script>
 <script src="js/rentals.js"></script>
