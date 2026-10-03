@@ -1,26 +1,58 @@
 /* ============================================================
    PLAN B — BILLBOARD RENTAL HUB  |  js/payments.js
    บันทึกการเบิกจ่าย (Payment_History) · ติดตามใบเสร็จ (Receipt_Tracking)
+   รายการค่าเช่า = ทุกแถวใน Contract_Master (1 แถว = 1 รอบเดือน)
+     กรองตาม Vendor / รอบจ่าย / ค้นหา → 🔍 รายละเอียด (ตรวจข้อมูล) → ยืนยันจ่าย
    ============================================================ */
+
+const MONTHS_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 const Payments = {
 
-  selected: null,     // รายการค่าเช่าที่เลือกในฟอร์ม
+  edits: {},          // id → ยอดจ่ายจริงที่แก้ในตาราง (คงไว้ตอนกรองใหม่)
+  focusId: '',        // แถวที่เปิดมาจากปุ่ม 💸 บันทึกจ่าย ในหน้ารายละเอียด
 
   init() {
-    $('payForm').addEventListener('submit', e => { e.preventDefault(); this.submit(); });
-    $('pRental').addEventListener('change', () => this.pick($('pRental').value));
-    $('pRental').addEventListener('input', () => this.pick($('pRental').value));
+    $('pfVendor').addEventListener('change', () => this.renderPick());
+    $('pfMonth').addEventListener('change', () => this.renderPick());
+    $('pfSearch').addEventListener('input', () => this.renderPick());
+    $('pfClear').addEventListener('click', () => {
+      $('pfVendor').value = ''; $('pfMonth').value = ''; $('pfSearch').value = '';
+      this.focusId = '';
+      this.renderPick();
+    });
+    $('pickBody').addEventListener('input', e => {
+      const inp = e.target.closest('.pick-amt');
+      if (inp) this.edits[inp.closest('tr').dataset.id] = inp.value;
+    });
+    $('pickBody').addEventListener('click', e => {
+      const b = e.target.closest('button[data-act]');
+      if (!b) return;
+      const id = b.closest('tr').dataset.id;
+      if (b.dataset.act === 'detail') Rentals.openDetail(id);
+      else this.confirmPay(id, b);
+    });
     $('fReceipt').addEventListener('change', () => this.renderReceipts());
   },
 
-  label(d) {
-    return `${d.vendorName} · ${d.mediaSite} · ${d.contractNo || '-'} · ${d.payment} [${d.id}]`;
+  /** 'Oct-26' → '2026-10' (ใช้ dueDate ถ้าคอลัมน์ Month ว่าง/อ่านไม่ได้) */
+  ymOf(d) {
+    const m = String(d.month || '').trim().match(/^([A-Za-z]{3})[-\s/]?(\d{2}|\d{4})$/);
+    if (m) {
+      const i = MONTHS_EN.findIndex(x => x.toLowerCase() === m[1].toLowerCase());
+      if (i >= 0) return `${m[2].length === 2 ? '20' + m[2] : m[2]}-${String(i + 1).padStart(2, '0')}`;
+    }
+    return /^\d{4}-\d{2}/.test(d.dueDate || '') ? d.dueDate.slice(0, 7) : '';
+  },
+
+  ymLabel(ym) {
+    return ym ? `${MONTHS_EN[+ym.slice(5, 7) - 1]}-${ym.slice(2, 4)}` : '';
   },
 
   render() {
     $('payFormCard').classList.toggle('hidden', !Store.isAdmin());
-    $('dlRentals').innerHTML = Store.data.rentals.map(d => `<option value="${esc(this.label(d))}">`).join('');
+    this.renderFilters();
+    this.renderPick();
 
     const st = $('fReceipt');
     const keep = st.value;
@@ -32,24 +64,76 @@ const Payments = {
     this.renderPayments();
   },
 
-  /** เลือกรายการจาก datalist ("... [R12]") */
-  pick(text) {
-    const m = String(text).match(/\[(R\d+)\]\s*$/);
-    this.selected = m ? Store.data.rentals.find(d => d.id === m[1]) || null : null;
-    $('pExpected').value = this.selected ? fmtMoney(this.selected.installment) : '';
-    if (this.selected && !$('pActual').value) $('pActual').value = this.selected.installment || '';
+  /* ---------- รายการค่าเช่า (Contract_Master ทั้งหมด) ---------- */
+  renderFilters() {
+    const rows = Store.data.rentals;
+    const fill = (sel, first, opts) => {
+      const keep = sel.value;
+      sel.innerHTML = `<option value="">${first}</option>` + opts.map(o => `<option value="${esc(o.v)}">${esc(o.t)}</option>`).join('');
+      if (opts.some(o => o.v === keep)) sel.value = keep;
+    };
+    const vendors = [...new Set(rows.map(d => d.vendorName).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'th'));
+    fill($('pfVendor'), '-- กรองผู้ขายทั้งหมด (Vendor) --', vendors.map(v => ({ v, t: v })));
+    const yms = [...new Set(rows.map(d => this.ymOf(d)).filter(Boolean))].sort();
+    fill($('pfMonth'), '-- กรองรอบจ่ายรายเดือนทั้งหมด --', yms.map(v => ({ v, t: this.ymLabel(v) })));
   },
 
-  /** เปิดฟอร์มพร้อมเลือกรายการ (จากปุ่ม 💸 บันทึกจ่าย ในหน้ารายละเอียด) */
+  /** รอบที่บันทึกจ่ายไปแล้ว (Vendor + Site + เดือน) — ใช้แสดงป้าย "บันทึกแล้ว" */
+  paidKeys() {
+    const k = new Set();
+    Store.data.payments.forEach(p => k.add(`${p.vendor}|${p.site}|${String(p.month).toLowerCase()}`));
+    return k;
+  },
+
+  filtered() {
+    const v = $('pfVendor').value, ym = $('pfMonth').value;
+    const q = $('pfSearch').value.trim().toLowerCase();
+    return Store.data.rentals
+      .filter(d => !this.focusId || d.id === this.focusId)
+      .filter(d => !v || d.vendorName === v)
+      .filter(d => !ym || this.ymOf(d) === ym)
+      .filter(d => !q || [d.vendorName, d.vendorNo, d.mediaSite, d.pr, d.po, d.contractNo, d.memoInv]
+        .some(x => String(x || '').toLowerCase().includes(q)))
+      .sort((a, b) => (this.ymOf(a) || '9').localeCompare(this.ymOf(b) || '9') ||
+                      a.vendorName.localeCompare(b.vendorName, 'th') || a._row - b._row);
+  },
+
+  renderPick() {
+    const rows = this.filtered();
+    $('pfCount').textContent = `${fmtNum(rows.length)} รายการ`;
+    const tb = $('pickBody');
+    if (!rows.length) {
+      tb.innerHTML = '<tr><td colspan="6"><div class="empty">ไม่พบรายการตามตัวกรอง</div></td></tr>';
+      return;
+    }
+    const done = this.paidKeys();
+    tb.innerHTML = rows.map(d => {
+      const ym = this.ymOf(d);
+      const label = this.ymLabel(ym) || d.month || '-';
+      const recorded = done.has(`${d.vendorName}|${d.mediaSite}|${label.toLowerCase()}`);
+      const amt = this.edits[d.id] !== undefined ? this.edits[d.id] : (d.installment ? Number(d.installment).toFixed(2) : '');
+      return `
+      <tr data-id="${d.id}" class="${d.id === this.focusId ? 'pick-focus' : ''}">
+        <td class="cell-strong">${esc(d.vendorName || '-')}<div class="cell-mute">${esc(d.contractNo || '-')}${d.vendorNo ? ' · ' + esc(d.vendorNo) : ''}</div></td>
+        <td>${esc(d.mediaSite || '-')}<div class="cell-mute">${esc(d.payment || '')}</div></td>
+        <td><b>${esc(label)}</b><div>${statusBadge(d.payStatus)}${recorded ? '<span class="dup-tag" title="มีใน Payment_History แล้ว">บันทึกแล้ว</span>' : ''}</div></td>
+        <td class="num">฿${fmtMoney(d.installment)}</td>
+        <td class="num"><input class="st-input pick-amt" type="number" min="0" step="0.01" value="${esc(amt)}"></td>
+        <td class="pick-act">
+          <button type="button" class="btn btn-ghost btn-sm" data-act="detail" title="ตรวจข้อมูลทั้งหมดของแถวนี้">🔍 รายละเอียด</button>
+          <button type="button" class="btn btn-primary btn-sm" data-act="pay">ยืนยันจ่าย</button>
+        </td>
+      </tr>`;
+    }).join('');
+  },
+
+  /** เปิดหน้าบันทึกจ่ายพร้อมกรองรายการเดียว (จากปุ่ม 💸 บันทึกจ่าย ในหน้ารายละเอียด) */
   prefill(id) {
     const d = Store.data.rentals.find(x => x.id === id);
     if (!d) return;
     App.switchTab('payments');
-    $('pActual').value = '';
-    $('pRental').value = this.label(d);
-    this.pick($('pRental').value);
-    const now = new Date();
-    $('pMonth').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    this.focusId = id;
+    this.renderPick();
     $('payFormCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
   },
 
@@ -58,31 +142,44 @@ const Payments = {
     $('payError').classList.toggle('hidden', !msg);
   },
 
-  async submit(force = false) {
+  async confirmPay(id, btn, force = false) {
     this.showError('');
-    const d = this.selected;
-    if (!d) return this.showError('กรุณาเลือกรายการค่าเช่าจากรายการที่แนะนำ');
-    if (!$('pMonth').value) return this.showError('กรุณาเลือกรอบดิว');
-    if (!(Number($('pActual').value) > 0)) return this.showError('กรุณากรอกยอดที่จ่ายจริง');
+    const d = Store.data.rentals.find(x => x.id === id);
+    if (!d) return this.showError('ไม่พบรายการ — กด ↻ รีเฟรช แล้วลองใหม่');
+    const ym = this.ymOf(d);
+    if (!ym) return this.showError(`แถว ${d._row}: ไม่มีรอบจ่าย (คอลัมน์ Month / วันชำระว่าง) — กรุณาแก้ไขข้อมูลก่อน`);
+    const inp = btn.closest('tr').querySelector('.pick-amt');
+    const actual = Number(inp.value);
+    if (!(actual > 0)) { inp.focus(); return this.showError('กรุณากรอกยอดจ่ายจริงให้มากกว่า 0'); }
 
-    const btn = $('btnPay');
+    const diff = actual - (Number(d.installment) || 0);
+    const markPaid = $('pMarkPaid').checked;
+    if (!force && !confirm(
+      `ยืนยันบันทึกการเบิกจ่าย\n\n` +
+      `Vendor: ${d.vendorName}\nMedia Site: ${d.mediaSite}\nเลขที่สัญญา: ${d.contractNo || '-'}\n` +
+      `รอบจ่าย: ${this.ymLabel(ym)}\nPR / PO: ${d.pr || '-'} / ${d.po || '-'}\n` +
+      `ค่าเช่าตามสัญญา: ${fmtMoney(d.installment)} บาท\nยอดจ่ายจริง: ${fmtMoney(actual)} บาท` +
+      (diff ? `  (ส่วนต่าง ${fmtMoney(diff)})` : '') +
+      ($('pRemark').value ? `\nหมายเหตุ: ${$('pRemark').value}` : '') +
+      (markPaid ? `\n\n→ เปลี่ยน Status Payment เป็น "เบิกแล้ว"` : ''))) return;
+
     btn.disabled = true;
     btn.textContent = 'กำลังบันทึก…';
     const r = await api('recordPayment', {
-      id: d.id, contractNo: d.contractNo, month: $('pMonth').value,
-      actual: $('pActual').value, remark: $('pRemark').value, markPaid: $('pMarkPaid').checked, force
+      id: d.id, contractNo: d.contractNo, month: ym,
+      actual, remark: $('pRemark').value, markPaid, force
     });
     btn.disabled = false;
-    btn.textContent = 'บันทึกการเบิกจ่าย';
+    btn.textContent = 'ยืนยันจ่าย';
 
     if (!r.ok) {
       if (r.code === 'SESSION_EXPIRED') { toast('เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่'); setTimeout(() => Auth.logout(), 1200); return; }
-      if (r.code === 'DUPLICATE' && confirm(r.message + '?')) return this.submit(true);
+      if (r.code === 'DUPLICATE' && confirm(r.message + '?')) return this.confirmPay(id, btn, true);
       return this.showError(r.message || 'บันทึกไม่สำเร็จ');
     }
-    toast(`บันทึกการเบิกจ่ายรอบ ${r.month} แล้ว`);
-    $('payForm').reset();
-    this.selected = null;
+    toast(`บันทึกการเบิกจ่าย ${d.vendorName} รอบ ${r.month} แล้ว`);
+    delete this.edits[id];
+    $('pRemark').value = '';
     await App.load(false, true);
   },
 
