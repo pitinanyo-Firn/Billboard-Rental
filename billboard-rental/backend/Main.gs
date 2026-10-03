@@ -73,6 +73,10 @@ function route_(action, p) {
       case 'getNewContracts':  return apiNewContracts_(p.token);
       case 'addNewContract':   return apiAddNewContract_(p.token, p);
       case 'deleteNewContract': return apiDeleteNewContract_(p.token, p);
+      case 'getAccrued':       return apiAccrued_(p.token);
+      case 'addAccrued':       return apiAddAccrued_(p.token, p);
+      case 'updateAccrued':    return apiUpdateAccrued_(p.token, p);
+      case 'deleteAccrued':    return apiDeleteAccrued_(p.token, p);
       case 'getMembers':       return apiMembers_(p.token);
       case 'addMember':        return apiAddMember_(p.token, p);
       case 'updateMember':     return apiUpdateMember_(p.token, p);

@@ -229,6 +229,8 @@ function apiDashboard_(token) {
     payments: payments,
     receipts: receipts,
     receiptStatuses: RECEIPT_STATUSES,
+    accrued: readAccrued_(),
+    accruedDay: ACCRUED.DAY,
     version: dataFingerprint_(),
     dueSoonDays: CFG.DUE_SOON_DAYS,
     expireDays: CFG.EXPIRE_DAYS,

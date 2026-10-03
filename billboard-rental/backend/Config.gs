@@ -27,6 +27,7 @@ const CFG = {
   SHEET_PAYMENT:  'Payment_History',
   SHEET_RECEIPT:  'Receipt_Tracking',
   SHEET_LOCATION: 'New_Location',
+  SHEET_ACCRUED:  'Accrued',           // ค่าใช้จ่ายค้างจ่ายประจำเดือน (Form Accrued ของบัญชี) — Accrued.gs
   SHEET_USERS:    'Users',
   SHEET_LOG:      'Log',
   HEADER_SCAN:    5,                   // สแกนหาแถว header ภายใน 5 แถวแรก
