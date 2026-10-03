@@ -60,7 +60,8 @@ function payGroups_(data) {
     if (!g.ecmNo && d.ecmNo) g.ecmNo = d.ecmNo;
     if (!g.po && d.po) g.po = d.po;
     // งวดถือว่ายังไม่เบิก ถ้ามีแถวใดยังรอเบิก
-    if (d.payStatus !== PAY_DONE) { g.payStatus = d.payStatus; g.payAlert = d.payAlert; }
+    if (payRank_(d.payStatus) < payRank_(g.payStatus)) g.payStatus = d.payStatus;
+    if (!isPaid_(d.payStatus)) g.payAlert = d.payAlert;
   });
   return Object.keys(map).map(function (k) {
     const g = map[k];
@@ -70,23 +71,23 @@ function payGroups_(data) {
 }
 
 /**
- * งวดที่เบิกแล้ว (สำหรับหน้าต่างการเบิก → เบิกแล้ว)
- * แถวที่เบิกแล้วไม่มี payDate (ไม่ต้องจ่ายแล้ว) — จัดกลุ่มตามวันชำระตามสัญญา (หรือวันที่เช็ค) แทน
+ * งวดที่เบิกแล้ว / จ่ายแล้ว (สำหรับหน้าต่างการเบิก → เบิกแล้ว, จ่ายแล้ว)
+ * แถวเหล่านี้ไม่มี payDate (ไม่ต้องจ่ายแล้ว) — จัดกลุ่มตามวันชำระตามสัญญา (หรือวันที่เช็ค) + สถานะ
  */
 function paidGroups_(data) {
   const map = {};
   const today = todayISO_();
   data.forEach(function (d) {
-    if (d.payStatus !== PAY_DONE) return;
+    if (!isPaid_(d.payStatus)) return;
     const date = d.dueDate || d.chequeDate || '';
-    const key = [d.contractNo, d.vendorNo, d.mediaSite, date].join('|');
+    const key = [d.contractNo, d.vendorNo, d.mediaSite, date, d.payStatus].join('|');
     if (!map[key]) {
       map[key] = {
         id: d.id, contractNo: d.contractNo, company: d.company, vendorName: d.vendorName,
         mediaSite: d.mediaSite, mediaType: d.mediaType, payment: d.payment, rent: d.rent,
         payDate: date, payKind: d.dueDate ? 'due' : (d.chequeDate ? 'cheque' : ''),
         daysToPay: date ? daysBetween_(today, date) : null, payAlert: 'paid',
-        payStatus: PAY_DONE, freq: d.freq, memoInv: '', ecmNo: '', po: '',
+        payStatus: d.payStatus, freq: d.freq, memoInv: '', ecmNo: '', po: '',
         amount: 0, months: [], rows: []
       };
     }
@@ -158,8 +159,8 @@ function apiDashboard_(token) {
       label: t,
       count: lineList.filter(function (d) { return d.mediaType === t; }).length,
       value: Math.round(rows.reduce(function (s, d) { return s + d.monthlyCost; }, 0)),
-      paid:  rows.filter(function (d) { return d.payStatus === PAY_DONE; }).length,
-      wait:  rows.filter(function (d) { return d.payStatus !== PAY_DONE; }).length
+      paid:  rows.filter(function (d) { return isPaid_(d.payStatus); }).length,
+      wait:  rows.filter(function (d) { return !isPaid_(d.payStatus); }).length
     };
   });
 
@@ -185,8 +186,8 @@ function apiDashboard_(token) {
     annualCost:   Math.round(annual),
     monthlyCost:  Math.round(monthCost),
     monthLabel:   monthRows.length ? thisMonth : '',
-    paid:         data.filter(function (d) { return d.payStatus === PAY_DONE; }).length,
-    waiting:      data.filter(function (d) { return d.payStatus !== PAY_DONE; }).length,
+    paid:         data.filter(function (d) { return isPaid_(d.payStatus); }).length,
+    waiting:      data.filter(function (d) { return !isPaid_(d.payStatus); }).length,
     overdue:      groups.filter(function (g) { return g.payAlert === 'overdue'; }).length,
     prior:        groups.filter(function (g) { return g.payAlert === 'prior'; }).length,
     dueSoon:      groups.filter(function (g) { return g.payAlert === 'due3' || g.payAlert === 'soon'; }).length,

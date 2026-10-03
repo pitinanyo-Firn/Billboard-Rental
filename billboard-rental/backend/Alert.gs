@@ -99,7 +99,8 @@ function pill_(text, bg, fg) {
 }
 
 function statusPill_(s) {
-  return s === PAY_DONE ? pill_(s, '#ECFDF5', '#047857') : pill_(s || 'รอเบิก', '#FFFBEB', '#B45309');
+  if (s === PAY_PAID) return pill_(s, '#EFF6FF', '#1D4ED8');
+  return s === PAY_PAID ? pill_(s, '#EFF6FF', '#1D4ED8') : s === PAY_DONE ? pill_(s, '#ECFDF5', '#047857') : pill_(s || 'รอเบิก', '#FFFBEB', '#B45309');
 }
 
 /** การ์ดสรุปตัวเลขด้านบน: [[label, value, sub, color], ...] */
@@ -315,7 +316,7 @@ function monthGroups_(data, ym) {
     const g = map[key];
     addToCycle_(g, d);
     g.months.push(d.month);
-    if (d.payStatus !== PAY_DONE) g.payStatus = d.payStatus || 'รอเบิก';
+    if (payRank_(d.payStatus) < payRank_(g.payStatus)) g.payStatus = d.payStatus || 'รอเบิก';
     if (!g.chequeDate && d.chequeDate) g.chequeDate = d.chequeDate;
     if (!g.memoInv && d.memoInv) g.memoInv = d.memoInv;
   });
@@ -344,8 +345,8 @@ function monthTable_(title, color, note, rows) {
 /** อีเมลสรุปงานของเดือน ym — ส่งได้แม้ไม่มีรายการ (แจ้งว่าไม่มี) */
 function monthlyEmail_(ym) {
   const rows = monthGroups_(readRentals_(), ym);
-  const wait = rows.filter(function (g) { return g.payStatus !== PAY_DONE; });
-  const done = rows.filter(function (g) { return g.payStatus === PAY_DONE; });
+  const wait = rows.filter(function (g) { return !isPaid_(g.payStatus); });
+  const done = rows.filter(function (g) { return isPaid_(g.payStatus); });
   const sum = function (arr) { return arr.reduce(function (s, g) { return s + g.amount; }, 0); };
   const total = sum(rows);
   const label = thMonthLabel_(ym);
@@ -355,11 +356,11 @@ function monthlyEmail_(ym) {
     stats: [
       ['รายการทั้งหมด', rows.length + ' รายการ', 'ยอดรวม ' + fmtMoney_(total) + ' บาท', MSTYLE.INK],
       ['รอเบิก', wait.length + ' รายการ', fmtMoney_(sum(wait)) + ' บาท', '#D97706'],
-      ['เบิกแล้ว', done.length + ' รายการ', fmtMoney_(sum(done)) + ' บาท', '#059669']
+      ['เบิกแล้ว / จ่ายแล้ว', done.length + ' รายการ', fmtMoney_(sum(done)) + ' บาท', '#059669']
     ],
     sections: [
       wait.length ? monthTable_('รอเบิก', '#D97706', 'ยังไม่ได้เบิกจ่าย — เรียงตามวันชำระตามสัญญา', wait) : '',
-      done.length ? monthTable_('เบิกแล้ว', '#059669', 'เบิกจ่ายแล้ว — ตรวจวันที่เช็คให้ตรงกำหนด', done) : ''
+      done.length ? monthTable_('เบิกแล้ว / จ่ายแล้ว', '#059669', 'เบิกจ่ายแล้ว — ตรวจวันที่เช็คให้ตรงกำหนด', done) : ''
     ],
     empty: 'ไม่มีรายการที่ครบกำหนดชำระในเดือน' + label
   });

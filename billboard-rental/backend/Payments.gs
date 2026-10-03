@@ -103,7 +103,7 @@ function apiRecordPayment_(token, p) {
     ensureSheet_(CFG.SHEET_RECEIPT, RECEIPT_HEADER)
       .appendRow([ts, safe(rental.vendorName), safe(rental.mediaSite), actual, RECEIPT_STATUSES[0]]);
 
-    if (p.markPaid && rental.payStatus !== PAY_DONE) {
+    if (p.markPaid && !isPaid_(rental.payStatus)) {
       const src = findDataSheet_();
       src.sheet.getRange(rental._row, src.map.payStatus + 1).setValue(PAY_DONE);
     }
@@ -120,7 +120,7 @@ function apiRecordPayment_(token, p) {
 
 /**
  * เปลี่ยน Status Payment ของงวดที่เลือก (admin) — หน้าต่างการเบิก ในแท็บครบกำหนดจ่าย
- * p: { groups: [{ contractNo, rows: ['R<row>', ...] }], status: 'เบิกแล้ว' | 'รอเบิก', memoInv }
+ * p: { groups: [{ contractNo, rows: ['R<row>', ...] }], status: 'รอเบิก' | 'เบิกแล้ว' | 'จ่ายแล้ว', memoInv }
  * 1 งวด = หลายแถวรายเดือน (ราย 3 เดือน / รายปี) → เปลี่ยนทุกแถวของงวดพร้อมกัน
  * memoInv (ไม่บังคับ): ใส่เลข MEMO/INV No. ให้แถวที่ยังว่าง
  */

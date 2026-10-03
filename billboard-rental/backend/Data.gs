@@ -227,11 +227,11 @@ function checkRow_(o, raw, disp, today) {
   if (o.chequeDate && o.dueDate && Math.abs(daysBetween_(o.dueDate, o.chequeDate)) > 180) {
     add('chequeDate', 'medium', 'เช็คลงวันที่ ' + disp.chequeDate + ' ห่างจากวันชำระตามสัญญา ' + disp.dueDate + ' เกิน 180 วัน — ปีอาจพิมพ์ผิด');
   }
-  if (o.payStatus === PAY_DONE && !o.memoInv && !o.ecmNo) add('memoInv', 'medium', 'สถานะเบิกแล้ว แต่ไม่มีเลข MEMO/INV และ ECM');
+  if (isPaid_(o.payStatus) && !o.memoInv && !o.ecmNo) add('memoInv', 'medium', 'สถานะ' + o.payStatus + ' แต่ไม่มีเลข MEMO/INV และ ECM');
   if (o.payStatus && PAY_STATUSES.indexOf(o.payStatus) < 0) add('payStatus', 'medium', 'Status Payment ไม่ใช่ ' + PAY_STATUSES.join(' / '));
-  if (o.priorPeriod && o.payStatus !== PAY_DONE) {
+  if (o.priorPeriod && !isPaid_(o.payStatus)) {
     add('payStatus', 'medium', 'วันชำระ ' + disp.dueDate + ' เป็นงวดของปีก่อน (Rental Year ' + o.rentalYear +
-        ') แต่สถานะยังเป็น "' + (o.payStatus || '-') + '" — ถ้าจ่ายแล้วให้เปลี่ยนเป็น ' + PAY_DONE);
+        ') แต่สถานะยังเป็น "' + (o.payStatus || '-') + '" — ถ้าจ่ายแล้วให้เปลี่ยนเป็น ' + PAY_DONE + ' หรือ ' + PAY_PAID);
   }
 
   Object.keys(VALUE_FIX).forEach(function (f) {
@@ -304,9 +304,10 @@ function readRentals_() {
     o.lineKey = [o.contractNo, o.vendorNo, o.mediaSite, o.payment].join('|');
 
     // --- วันที่ต้องจ่ายถัดไป ---
-    const paid = o.payStatus === PAY_DONE;
+    const paid = isPaid_(o.payStatus);
     const dCheque = daysBetween_(today, o.chequeDate);
     if (!paid && o.dueDate)                             { o.payDate = o.dueDate;    o.payKind = 'due'; }
+    else if (o.payStatus === PAY_PAID)                  { o.payDate = '';           o.payKind = ''; }  // จ่าย Vendor แล้ว จบงวด
     else if (o.chequeDate && dCheque !== null && dCheque >= 0) { o.payDate = o.chequeDate; o.payKind = 'cheque'; }
     else                                                { o.payDate = '';           o.payKind = ''; }
     o.daysToPay = o.payDate ? daysBetween_(today, o.payDate) : null;
