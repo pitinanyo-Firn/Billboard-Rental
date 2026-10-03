@@ -68,6 +68,7 @@
     <div class="tab" data-tab="newcontract">New Contract</div>
     <div class="tab" data-tab="due">ครบกำหนดจ่าย <span class="tab-count" id="cntDue"></span></div>
     <div class="tab" data-tab="payments">บันทึกจ่าย / ใบเสร็จ</div>
+    <div class="tab" data-tab="accrued">Accrued <span class="tab-count" id="cntAccrued"></span></div>
     <div class="tab" data-tab="quality">ตรวจสอบข้อมูล <span class="tab-count" id="cntIssues"></span></div>
     <div class="tab" data-tab="ai">✦ ผู้ช่วย AI</div>
     <div class="tab hidden" data-tab="members">สมาชิก</div>
@@ -473,6 +474,104 @@
       </div>
     </section>
 
+    <!-- ---------- ACCRUED (ส่งบัญชีทุกวันที่ 23) ---------- -->
+    <section id="tab-accrued" class="hidden">
+      <div class="card">
+        <div class="card-head">
+          <h2>📒 Accrued ประจำเดือน</h2>
+          <div class="spacer"></div>
+          <span class="ac-due" id="acDue"></span>
+        </div>
+        <div class="ac-def">Accrued = เดือนนี้มีค่าใช้จ่ายเกิดขึ้นแล้วตาม <b>Service Month</b> แต่ยังไม่มี Transaction · ส่งแผนกบัญชีทุกวันที่ 23 ของเดือน · บันทึกลงชีต <b>Accrued</b> ตาม Form Accrued (STT-BB-BUS-OTHER)</div>
+        <div class="ac-bar">
+          <label class="ac-month" for="acMonth">Service Month
+            <select id="acMonth" class="st-select"></select>
+          </label>
+          <input id="acSearch" type="search" class="ac-search" placeholder="ค้นหา Vendor, Part Code, Media Site, หมายเหตุ...">
+          <span class="cell-mute" id="acSummary"></span>
+          <div class="spacer"></div>
+          <button type="button" class="btn btn-ghost btn-sm hidden" id="btnAcSuggest">🔎 ดึงรายการที่ยังไม่มี Transaction</button>
+          <button type="button" class="btn btn-ghost btn-sm hidden" id="btnAcAdd">+ เพิ่มรายการ</button>
+          <button type="button" class="btn btn-primary btn-sm" id="btnAcExport" style="width:auto">⬇ Export Excel</button>
+        </div>
+      </div>
+
+      <div class="card hidden" id="acSuggestCard">
+        <div class="card-head">
+          <h2>ค่าเช่าเดือนนี้ที่ยังไม่มี Transaction</h2>
+          <div class="spacer"></div>
+          <span class="cell-mute" id="acSuggestInfo"></span>
+        </div>
+        <div class="cell-mute" style="margin-bottom:10px;">จาก Contract_Master: แถวของ Service Month ที่เลือก ที่ Status Payment ยังไม่ใช่ "เบิกแล้ว / จ่ายแล้ว" และยังไม่อยู่ในรายการ Accrued ของเดือนนี้ — ติ๊กเลือกแล้วกดเพิ่ม (แก้ไขรายละเอียดภายหลังได้)</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th><input type="checkbox" id="acSugAll" title="เลือกทั้งหมด"></th><th>VENDOR</th><th>Media Site</th><th>Part Code</th><th>Description & Period</th><th>Payment</th><th>Status Payment</th><th class="num">Amount (ก่อน VAT)</th></tr></thead>
+            <tbody id="acSuggestBody" data-fold="0"></tbody>
+          </table>
+        </div>
+        <div class="nc-actions">
+          <div class="spacer"></div>
+          <button type="button" class="btn btn-ghost" id="btnAcSugClose">ปิด</button>
+          <button type="button" class="btn btn-primary" id="btnAcSugAdd" style="width:auto;padding:12px 28px;">เพิ่มที่เลือกเข้า Accrued</button>
+        </div>
+      </div>
+
+      <div class="card hidden" id="acFormCard">
+        <div class="card-head">
+          <h2 id="acFormTitle">เพิ่มรายการ Accrued</h2>
+          <div class="spacer"></div>
+          <span class="cell-mute">ช่องที่มี * ต้องกรอก</span>
+        </div>
+        <div id="acError" class="alert-msg hidden"></div>
+        <form id="acForm" novalidate>
+          <div class="field wide" style="margin-bottom:12px;">
+            <label for="acPick">ดึงข้อมูลจากทะเบียนค่าเช่า (ไม่บังคับ)</label>
+            <input id="acPick" list="dlAcRentals" type="search" autocomplete="off" placeholder="พิมพ์ค้นหา Vendor / Media Site / Part Code ของเดือนนี้ แล้วเลือกเพื่อกรอกให้อัตโนมัติ">
+            <datalist id="dlAcRentals"></datalist>
+          </div>
+          <div class="nc-grid nc-grid-4">
+            <div class="field"><label for="acFMonth">Service Month *</label><input id="acFMonth" type="month"></div>
+            <div class="field"><label for="acCompany">Company</label><input id="acCompany" maxlength="50"></div>
+            <div class="field"><label for="acDepartment">Department</label><input id="acDepartment" maxlength="100"></div>
+            <div class="field"><label for="acVendor">VENDOR *</label><input id="acVendor" list="dlAcVendor" maxlength="200"><datalist id="dlAcVendor"></datalist></div>
+            <div class="field"><label for="acPartCode">Part Code</label><input id="acPartCode" maxlength="60"></div>
+            <div class="field"><label for="acPartDesc">Part Description</label><input id="acPartDesc" maxlength="300"></div>
+            <div class="field"><label for="acAmount">Amount (ก่อน VAT) *</label><input id="acAmount" type="number" step="0.01"></div>
+            <div class="field"><label for="acSiteCode">Media Site Code</label><input id="acSiteCode" maxlength="100"></div>
+          </div>
+          <div class="nc-grid nc-grid-2">
+            <div class="field"><label for="acDesc">Description & Period *</label><input id="acDesc" maxlength="500" placeholder="เช่น ค่าเช่าพื้นที่โฆษณา Uni Pole ... 1-30 กันยายน 2569"></div>
+            <div class="field"><label for="acSiteName">Media Site Name</label><input id="acSiteName" maxlength="300"></div>
+          </div>
+          <div class="nc-grid nc-grid-3">
+            <div class="field"><label for="acToAccount">ถึงบัญชี</label><input id="acToAccount" maxlength="200"></div>
+            <div class="field"><label for="acNote">หมายเหตุ</label><input id="acNote" maxlength="500"></div>
+            <div class="field"><label for="acEmail">Email ผู้ส่งข้อมูล</label><input id="acEmail" maxlength="200"></div>
+          </div>
+          <div class="nc-actions">
+            <div class="spacer"></div>
+            <button type="button" class="btn btn-ghost" id="btnAcCancel">ยกเลิก</button>
+            <button type="submit" class="btn btn-primary" id="btnAcSave" style="width:auto;padding:12px 28px;">💾 บันทึก</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Form Accrued (STT-BB-BUS-OTHER)</h2>
+          <div class="spacer"></div>
+          <span class="cell-mute" id="acCount"></span>
+        </div>
+        <div class="table-wrap">
+          <table class="ac-table">
+            <thead><tr><th>Line</th><th>Company</th><th>Department</th><th>VENDOR</th><th>Part Code</th><th>Part Description</th><th>Description & Period</th><th class="num">Amount (ก่อน VAT)</th><th>Media Site Code</th><th>Media Site Name</th><th>ถึงบัญชี</th><th>หมายเหตุ</th><th>Email ผู้ส่งข้อมูล</th><th></th></tr></thead>
+            <tbody id="acBody"></tbody>
+            <tfoot id="acFoot"></tfoot>
+          </table>
+        </div>
+      </div>
+    </section>
+
     <!-- ---------- DATA QUALITY ---------- -->
     <section id="tab-quality" class="hidden">
       <div class="card">
@@ -645,6 +744,7 @@
 <script src="js/newcontract.js"></script>
 <script src="js/due.js"></script>
 <script src="js/payments.js"></script>
+<script src="js/accrued.js"></script>
 <script src="js/quality.js"></script>
 <script src="js/members.js"></script>
 <script src="js/sync.js"></script>
