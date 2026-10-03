@@ -5,12 +5,13 @@
 
 const App = {
 
-  TABS: ['dashboard', 'rentals', 'due', 'payments', 'quality', 'ai', 'members'],
+  TABS: ['dashboard', 'rentals', 'newcontract', 'due', 'payments', 'quality', 'ai', 'members'],
 
   /* ---------- Bootstrap ---------- */
   async init() {
     Auth.init();
     Rentals.init();
+    NewContract.init();
     Due.init();
     Payments.init();
     Quality.init();
@@ -71,6 +72,7 @@ const App = {
     Due.render();
     Payments.render();
     Quality.render();
+    NewContract.render();
     Members.load();
     Sync.setState('ok');
 
