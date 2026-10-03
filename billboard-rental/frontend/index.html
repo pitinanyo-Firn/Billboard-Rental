@@ -64,6 +64,7 @@
   <nav class="tabs">
     <div class="tab active" data-tab="dashboard">Dashboard</div>
     <div class="tab" data-tab="rentals">ทะเบียนค่าเช่า</div>
+    <div class="tab" data-tab="newcontract">New Contract</div>
     <div class="tab" data-tab="due">ครบกำหนดจ่าย <span class="tab-count" id="cntDue"></span></div>
     <div class="tab" data-tab="payments">บันทึกจ่าย / ใบเสร็จ</div>
     <div class="tab" data-tab="quality">ตรวจสอบข้อมูล <span class="tab-count" id="cntIssues"></span></div>
@@ -180,6 +181,87 @@
               </tr>
             </thead>
             <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- NEW CONTRACT ---------- -->
+    <section id="tab-newcontract" class="hidden">
+      <div class="card hidden" id="ncFormCard">
+        <div class="card-head">
+          <h2>New Contract — เพิ่มสัญญาใหม่</h2>
+          <div class="spacer"></div>
+          <span class="cell-mute">บันทึกลงแท็บ New_Contract ใน Google Sheet</span>
+        </div>
+        <div id="ncError" class="alert-msg hidden"></div>
+        <form id="ncForm" novalidate>
+          <div class="form-grid">
+            <div class="field">
+              <label for="ncCompany">บริษัท / Company *</label>
+              <input id="ncCompany" list="dlNcCompany" maxlength="200" placeholder="เช่น Plan B">
+              <datalist id="dlNcCompany"></datalist>
+              <em class="edit-err" data-err="company"></em>
+            </div>
+            <div class="field">
+              <label for="ncSupplier">บริษัท / Supplier *</label>
+              <input id="ncSupplier" list="dlNcSupplier" maxlength="200" placeholder="ชื่อผู้รับเงิน / คู่สัญญา">
+              <datalist id="dlNcSupplier"></datalist>
+              <em class="edit-err" data-err="supplier"></em>
+            </div>
+            <div class="field">
+              <label for="ncVendorNo">Vendor No.</label>
+              <input id="ncVendorNo" maxlength="50" placeholder="เช่น 001190">
+            </div>
+            <div class="field">
+              <label for="ncPr">PR Number</label>
+              <input id="ncPr" maxlength="50" placeholder="เช่น PR2604001">
+            </div>
+            <div class="field">
+              <label for="ncPo">PO Number</label>
+              <input id="ncPo" maxlength="50" placeholder="เช่น PO26040001">
+            </div>
+            <div class="field">
+              <label for="ncContractNo">Contract No. *</label>
+              <input id="ncContractNo" maxlength="100" placeholder="เช่น PB2026/001">
+              <em class="edit-err" data-err="contractNo"></em>
+            </div>
+            <div class="field">
+              <label for="ncStart">Start Contract *</label>
+              <input id="ncStart" type="date">
+              <em class="edit-err" data-err="startDate"></em>
+            </div>
+            <div class="field">
+              <label for="ncEnd">End Contract *</label>
+              <input id="ncEnd" type="date">
+              <em class="edit-err" data-err="endDate"></em>
+            </div>
+            <div class="field wide">
+              <label>Payment *</label>
+              <div class="seg" id="ncPayment">
+                <label><input type="radio" name="ncPay" value="รายเดือน"><span>รายเดือน</span></label>
+                <label><input type="radio" name="ncPay" value="รายปี"><span>รายปี</span></label>
+                <label><input type="radio" name="ncPay" value="ราย 3 เดือน"><span>ราย 3 เดือน</span></label>
+              </div>
+              <em class="edit-err" data-err="payment"></em>
+            </div>
+          </div>
+          <div class="cell-mute" id="ncPeriod" style="margin-bottom:12px"></div>
+          <button type="submit" class="btn btn-primary" id="btnNcSave" style="width:auto;padding:12px 28px;">+ บันทึกสัญญาใหม่</button>
+          <button type="button" class="btn btn-ghost" id="btnNcReset" style="margin-left:8px">ล้างฟอร์ม</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>สัญญาใหม่ที่บันทึกแล้ว</h2>
+          <div class="spacer"></div>
+          <span class="cell-mute" id="ncCount"></span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>วันที่บันทึก</th><th>Contract No.</th><th>บริษัท / Supplier</th><th>Vendor No.</th><th>PR / PO</th><th>Start – End</th><th>Payment</th><th></th></tr></thead>
+            <tbody id="ncBody"></tbody>
           </table>
         </div>
       </div>
@@ -478,6 +560,7 @@
 <script src="js/dashboard.js"></script>
 <script src="js/rentals.js"></script>
 <script src="js/editor.js"></script>
+<script src="js/newcontract.js"></script>
 <script src="js/due.js"></script>
 <script src="js/payments.js"></script>
 <script src="js/quality.js"></script>
