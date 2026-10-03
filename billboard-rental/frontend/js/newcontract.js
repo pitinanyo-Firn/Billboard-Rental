@@ -1,6 +1,6 @@
 /* ============================================================
    PLAN B — BILLBOARD RENTAL HUB  |  js/newcontract.js
-   แท็บ "New Contract": ฟอร์มสร้างข้อมูลสัญญาใหม่ → ชีต New_Contract (admin) + รายการที่บันทึกแล้ว
+   แท็บ "New Contract": ฟอร์มสร้างข้อมูลสัญญาใหม่ → แทรกลงชีต Contract_Master ต่อท้ายเดือนที่เลือก (admin) + รายการที่บันทึกแล้ว
      ส่วนที่ 1 ข้อมูลบริษัทและเอกสาร · ส่วนที่ 2 Location / Expense Period (เพิ่มได้หลาย Location)
    ============================================================ */
 
@@ -20,6 +20,8 @@ const NewContract = {
       if (no && !$('ncVendorNo').value) $('ncVendorNo').value = no;
     });
     ['ncStart', 'ncEnd'].forEach(id => $(id).addEventListener('change', () => this.showPeriod()));
+    document.querySelectorAll('input[name="ncPay"]').forEach(r => r.addEventListener('change', () => this.rentLabels()));
+    $('ncMonth').value = this.thisMonth();
     this.addLocation(false);
   },
 
@@ -63,7 +65,7 @@ const NewContract = {
         <div class="field"><label>Epicore Code</label><input data-f="epicoreCode" maxlength="300" placeholder="เช่น A02003-BKK-RCT03"></div>
         <div class="field"><label>Part Code</label><input data-f="partCode" maxlength="300" placeholder="เช่น AM-A02003-0001"></div>
         <div class="field span3"><label>Part Description</label><input data-f="partDesc" maxlength="300" placeholder="เช่น ค่าเช่าพื้นที่โฆษณา Uni Pole : ..."></div>
-        <div class="field"><label>ค่าเช่าตามสัญญา (Contractual Rent)</label><input data-f="rent" type="number" min="0" step="0.01" placeholder="0.00"><em class="edit-err" data-lerr="rent"></em></div>
+        <div class="field"><label class="nc-rent-label">ค่าเช่าตามสัญญา (Contractual Rent)</label><input data-f="rent" type="number" min="0" step="0.01" placeholder="0.00"><em class="edit-err" data-lerr="rent"></em></div>
       </div>`;
     $('ncLocations').appendChild(box);
     box.querySelector('.nc-loc-del').addEventListener('click', () => {
@@ -82,6 +84,7 @@ const NewContract = {
     });
     box.querySelector('[data-f="rent"]').addEventListener('input', () => this.showTotal());
     this.renumber();
+    this.rentLabels();
     if (focus) box.querySelector('[data-f="mediaType"]').focus();
   },
 
@@ -133,6 +136,20 @@ const NewContract = {
     this.setErrors();
     this.showError('');
     $('ncPeriod').textContent = '';
+    $('ncMonth').value = this.thisMonth();
+    this.rentLabels();
+  },
+
+  thisMonth() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  },
+
+  /** รายปี = ค่าเช่าต่อปี (ลง Amount/Year) · รายเดือน / ราย 3 เดือน = ต่อเดือน (ลง Amount/Month) */
+  rentLabels() {
+    const pay = document.querySelector('input[name="ncPay"]:checked');
+    const unit = pay && pay.value === 'รายปี' ? 'ต่อปี' : 'ต่อเดือน';
+    document.querySelectorAll('.nc-rent-label').forEach(l => { l.textContent = `ค่าเช่าตามสัญญา (${unit})`; });
   },
 
   async submit(force = false) {
@@ -142,7 +159,7 @@ const NewContract = {
     const body = {
       company: $('ncCompany').value, supplier: $('ncSupplier').value, vendorNo: $('ncVendorNo').value,
       pr: $('ncPr').value, po: $('ncPo').value, contractNo: $('ncContractNo').value,
-      startDate: $('ncStart').value, endDate: $('ncEnd').value, payment: pay ? pay.value : '',
+      startDate: $('ncStart').value, endDate: $('ncEnd').value, payment: pay ? pay.value : '', month: $('ncMonth').value,
       locations: this.locations(), force
     };
     const btn = $('btnNcSave');
@@ -159,24 +176,29 @@ const NewContract = {
       this.showError(r.message || 'บันทึกไม่สำเร็จ');
       return $('ncFormCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-    toast(`บันทึกสัญญา ${body.contractNo.trim()} (${body.locations.length} Location) ลง Google Sheet แล้ว`);
+    toast(`เพิ่มสัญญา ${body.contractNo.trim()} ลง Contract_Master เดือน ${r.month} ลำดับ ${r.nos.join(', ')} แล้ว`);
+    this.reloadData();
     this.list = r.list;
     this.renderList();
     this.reset();
   },
+
+  /** แถวใหม่ใน Contract_Master → โหลด Dashboard / รายการค่าเช่า ใหม่เบื้องหลัง */
+  reloadData() { App.load(false, true); },
 
   /* ---------- รายการที่บันทึกแล้ว ---------- */
   renderList() {
     $('ncCount').textContent = `${this.list.length} สัญญา`;
     const tb = $('ncBody');
     if (!this.list.length) {
-      tb.innerHTML = '<tr><td colspan="9"><div class="empty">ยังไม่มีสัญญาใหม่</div></td></tr>';
+      tb.innerHTML = '<tr><td colspan="10"><div class="empty">ยังไม่มีสัญญาใหม่</div></td></tr>';
       return;
     }
     const admin = Store.isAdmin();
     tb.innerHTML = this.list.map(c => `
       <tr data-id="${c.id}">
         <td class="cell-mute">${esc(c.timestamp)}<div>${esc(c.by)}</div></td>
+        <td><b>${esc(c.month)}</b><div class="cell-mute">ลำดับ ${esc(c.rowNos.join(', '))}</div></td>
         <td class="cell-strong">${esc(c.contractNo)}</td>
         <td>${esc(c.company)}<div class="cell-mute">${esc(c.supplier)}${c.vendorNo ? ' · ' + esc(c.vendorNo) : ''}</div></td>
         <td>${esc(c.pr || '-')}<div class="cell-mute">${esc(c.po || '-')}</div></td>
@@ -190,9 +212,9 @@ const NewContract = {
       </tr>`).join('');
     tb.querySelectorAll('.nc-del').forEach(b => b.addEventListener('click', async () => {
       const c = this.list.find(x => x.id === b.closest('tr').dataset.id);
-      if (!confirm(`ลบสัญญาใหม่ ${c.contractNo} (${c.supplier}) ทั้ง ${c.locations.length || 1} Location?`)) return;
-      const r = await apiGuarded('deleteNewContract', { id: c.id, contractNo: c.contractNo, timestamp: c.timestamp });
-      if (r) { this.list = r.list; this.renderList(); toast('ลบรายการแล้ว'); }
+      if (!confirm(`ลบสัญญา ${c.contractNo} (${c.supplier}) เดือน ${c.month} ออกจาก Contract_Master ทั้ง ${c.locations.length} แถว (ลำดับ ${c.rowNos.join(', ')})?`)) return;
+      const r = await apiGuarded('deleteNewContract', { contractNo: c.contractNo, supplier: c.supplier, month: c.month, rows: c.locations.map(l => l.row) });
+      if (r) { this.list = r.list; this.renderList(); toast('ลบแถวออกจาก Contract_Master แล้ว'); this.reloadData(); }
     }));
   }
 };
