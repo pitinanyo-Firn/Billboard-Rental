@@ -51,7 +51,7 @@
 | **Login** | Email + Password (SHA-256 + salt ในชีต `Users`) · session 8 ชม. · log ทุกครั้ง · role `admin` / `viewer` |
 | **Dashboard** | KPI 10 ตัว · ค่าเช่าต่อปีแยกประเภทสื่อ · ครบกำหนดจ่ายเร็ว ๆ นี้ · ประมาณการค่าเช่า 12 เดือน · สถานะการเบิกตามประเภทสื่อ · บริษัท · External vs Inter-Co · สัญญาหมดอายุ |
 | **ทะเบียนค่าเช่า** | ค้นหา + ตัวกรอง 6 ชั้น · คลิกแถวเปิดรายละเอียด · admin ✎ แก้ไขทุกช่อง → เขียนลงชีตทันที + audit log |
-| **New Contract** | admin กรอกสัญญาใหม่ (Company, Supplier, Vendor No., PR, PO, Start/End Contract, Contract No., Payment: รายเดือน / รายปี / ราย 3 เดือน) → บันทึกลงแท็บ `New_Contract` ในชีต · กันบันทึกซ้ำ · ลบได้ |
+| **New Contract** | admin กรอกสัญญาใหม่ — ส่วนที่ 1 Company, ผู้ขาย, Vendor No., Contract No., PR, PO, Start/End Contract, Payment (รายเดือน / รายปี / ราย 3 เดือน) · ส่วนที่ 2 Location (Media Type, Media Site, Epicore Code, Part Code, Part Description, ค่าเช่าตามสัญญา) เพิ่มได้หลาย Location → บันทึกลงแท็บ `New_Contract` ในชีต · กันบันทึกซ้ำ · ลบได้ |
 | **ครบกำหนดจ่าย** | เลยกำหนด + ภายใน 30 วัน (วันชำระตามสัญญา หรือเช็คลงวันที่) · สถานะอีเมลแจ้งเตือน · admin ส่งสรุปเองได้ |
 | **บันทึกจ่าย / ใบเสร็จ** | บันทึกลง `Payment_History` + สร้างรายการ `Receipt_Tracking` · กันบันทึกซ้ำ · เปลี่ยนสถานะ/ลบใบเสร็จ (admin) · แสดงส่วนต่างยอด |
 | **ตรวจสอบข้อมูล** | ตรวจทุกแถวใน `Contract_Master` · แก้อัตโนมัติได้: วันที่เขียนเป็น ด/ว/ป, คำสะกดผิด, ช่องว่างเกิน |
