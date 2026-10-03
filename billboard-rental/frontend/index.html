@@ -191,21 +191,22 @@
     <section id="tab-newcontract" class="hidden">
       <div class="card hidden" id="ncFormCard">
         <div class="card-head">
-          <h2>New Contract — เพิ่มสัญญาใหม่</h2>
+          <h2>📝 สร้างข้อมูลสัญญาใหม่ (New Contract)</h2>
           <div class="spacer"></div>
-          <span class="cell-mute">บันทึกลงแท็บ New_Contract ใน Google Sheet</span>
+          <span class="cell-mute">บันทึกลงแท็บ New_Contract ใน Google Sheet · 1 Location = 1 แถว</span>
         </div>
         <div id="ncError" class="alert-msg hidden"></div>
         <form id="ncForm" novalidate>
-          <div class="form-grid">
+          <h3 class="nc-part">ส่วนที่ 1: ข้อมูลบริษัทและเอกสาร</h3>
+          <div class="nc-grid nc-grid-4">
             <div class="field">
-              <label for="ncCompany">บริษัท / Company *</label>
+              <label for="ncCompany">บริษัท (Company) *</label>
               <input id="ncCompany" list="dlNcCompany" maxlength="200" placeholder="เช่น Plan B">
               <datalist id="dlNcCompany"></datalist>
               <em class="edit-err" data-err="company"></em>
             </div>
             <div class="field">
-              <label for="ncSupplier">บริษัท / Supplier *</label>
+              <label for="ncSupplier">ผู้ขาย (Vendor Name) *</label>
               <input id="ncSupplier" list="dlNcSupplier" maxlength="200" placeholder="ชื่อผู้รับเงิน / คู่สัญญา">
               <datalist id="dlNcSupplier"></datalist>
               <em class="edit-err" data-err="supplier"></em>
@@ -215,17 +216,19 @@
               <input id="ncVendorNo" maxlength="50" placeholder="เช่น 001190">
             </div>
             <div class="field">
+              <label for="ncContractNo">Contract No. *</label>
+              <input id="ncContractNo" maxlength="100" placeholder="เช่น PB2026/001">
+              <em class="edit-err" data-err="contractNo"></em>
+            </div>
+          </div>
+          <div class="nc-grid nc-grid-5">
+            <div class="field">
               <label for="ncPr">PR Number</label>
               <input id="ncPr" maxlength="50" placeholder="เช่น PR2604001">
             </div>
             <div class="field">
               <label for="ncPo">PO Number</label>
               <input id="ncPo" maxlength="50" placeholder="เช่น PO26040001">
-            </div>
-            <div class="field">
-              <label for="ncContractNo">Contract No. *</label>
-              <input id="ncContractNo" maxlength="100" placeholder="เช่น PB2026/001">
-              <em class="edit-err" data-err="contractNo"></em>
             </div>
             <div class="field">
               <label for="ncStart">Start Contract *</label>
@@ -237,19 +240,33 @@
               <input id="ncEnd" type="date">
               <em class="edit-err" data-err="endDate"></em>
             </div>
-            <div class="field wide">
+            <div class="field">
               <label>Payment *</label>
               <div class="seg" id="ncPayment">
-                <label><input type="radio" name="ncPay" value="รายเดือน"><span>รายเดือน</span></label>
+                <label><input type="radio" name="ncPay" value="รายเดือน" checked><span>รายเดือน</span></label>
                 <label><input type="radio" name="ncPay" value="รายปี"><span>รายปี</span></label>
                 <label><input type="radio" name="ncPay" value="ราย 3 เดือน"><span>ราย 3 เดือน</span></label>
               </div>
               <em class="edit-err" data-err="payment"></em>
             </div>
           </div>
-          <div class="cell-mute" id="ncPeriod" style="margin-bottom:12px"></div>
-          <button type="submit" class="btn btn-primary" id="btnNcSave" style="width:auto;padding:12px 28px;">+ บันทึกสัญญาใหม่</button>
-          <button type="button" class="btn btn-ghost" id="btnNcReset" style="margin-left:8px">ล้างฟอร์ม</button>
+          <div class="cell-mute" id="ncPeriod"></div>
+
+          <div class="nc-part-head">
+            <h3 class="nc-part">ส่วนที่ 2: Location / Expense Period</h3>
+            <div class="spacer"></div>
+            <button type="button" class="btn btn-ghost btn-sm nc-add" id="btnNcAddLoc">+ เพิ่ม Location</button>
+          </div>
+          <em class="edit-err" data-err="locations"></em>
+          <div id="ncLocations"></div>
+          <datalist id="dlNcMedia"></datalist>
+
+          <div class="nc-actions">
+            <span class="cell-mute" id="ncTotal"></span>
+            <div class="spacer"></div>
+            <button type="button" class="btn btn-ghost" id="btnNcReset">ล้างฟอร์ม</button>
+            <button type="submit" class="btn btn-primary" id="btnNcSave" style="width:auto;padding:12px 28px;">💾 บันทึกเข้าระบบ</button>
+          </div>
         </form>
       </div>
 
@@ -261,13 +278,12 @@
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>วันที่บันทึก</th><th>Contract No.</th><th>บริษัท / Supplier</th><th>Vendor No.</th><th>PR / PO</th><th>Start – End</th><th>Payment</th><th></th></tr></thead>
+            <thead><tr><th>วันที่บันทึก</th><th>Contract No.</th><th>บริษัท / ผู้ขาย</th><th>PR / PO</th><th>Start – End</th><th>Payment</th><th>Location</th><th class="num">ค่าเช่าตามสัญญา (บาท)</th><th></th></tr></thead>
             <tbody id="ncBody"></tbody>
           </table>
         </div>
       </div>
     </section>
-
     <!-- ---------- DUE ---------- -->
     <section id="tab-due" class="hidden">
       <div class="card notice-mail">
