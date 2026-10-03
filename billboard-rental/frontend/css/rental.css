@@ -122,6 +122,24 @@ tr.fold-hide{display:none}
   .nc-loc-grid .span3{grid-column:auto}
 }
 
+/* ---------- Accrued ---------- */
+.nc-grid-2{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
+.nc-grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.ac-def{font-size:12.5px;color:var(--ink-2);background:#F8FAFC;border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 12px;margin-bottom:12px}
+.ac-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ac-month{display:inline-flex;align-items:center;gap:8px;margin:0;font-size:13px;font-weight:600;color:var(--ink-2)}
+.ac-search{width:300px;max-width:100%;padding:8px 10px}
+.ac-bar .btn-sm{width:auto}
+.ac-due{font-size:12.5px;font-weight:600;padding:4px 10px;border-radius:999px;background:#EFF6FF;color:#1D4ED8}
+.ac-due.late{background:#FEF2F2;color:#B91C1C}
+.ac-due.soon{background:#FFFBEB;color:#B45309}
+.ac-table thead th{background:#DDEBF7;color:#111827;white-space:nowrap;text-align:center}
+.ac-table td{font-size:12.5px;vertical-align:top}
+.ac-table td.ac-wrap{min-width:260px;white-space:normal}
+.ac-table tfoot td{font-weight:700;background:#F8FAFC}
+.ac-month-row td{background:#F1F5F9;font-weight:700;color:var(--ink-2)}
+@media (max-width:980px){ .nc-grid-2,.nc-grid-3{grid-template-columns:1fr} }
+
 .test-opts{display:grid;gap:10px}
 .member-result ul li{margin:2px 0}
 
