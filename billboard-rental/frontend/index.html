@@ -397,27 +397,42 @@
           <span class="cell-mute">บันทึกลง Payment_History และเพิ่มรายการติดตามใบเสร็จอัตโนมัติ</span>
         </div>
         <div id="payError" class="alert-msg hidden"></div>
-        <div class="pay-label">รายการค่าเช่า * <span class="cell-mute">— ดึงทุกแถวจากชีต Contract_Master · กด 🔍 รายละเอียด เพื่อตรวจข้อมูลก่อนกด ยืนยันจ่าย</span></div>
-        <div class="filter-bar pay-filter">
-          <select id="pfVendor" class="st-select"><option value="">-- กรองผู้ขายทั้งหมด (Vendor) --</option></select>
-          <select id="pfMonth" class="st-select"><option value="">-- กรองรอบจ่ายรายเดือนทั้งหมด --</option></select>
-          <input id="pfSearch" class="st-input" type="search" placeholder="ค้นหาค่าใช้จ่าย (Vendor, Site, PR, PO, เลขสัญญา)...">
-          <span class="pay-count" id="pfCount"></span>
-          <button type="button" class="btn btn-ghost btn-sm" id="pfClear">ล้างตัวกรอง</button>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Vendor Name</th><th>Media Site</th><th>รอบจ่าย</th><th class="num">ค่าเช่าตามสัญญา</th><th class="num">ยอดจ่ายจริง (แก้ไขได้)</th><th>Action</th></tr></thead>
-            <tbody id="pickBody" data-fold="20"></tbody>
-          </table>
-        </div>
-        <div class="pay-opts">
-          <div class="field">
-            <label for="pRemark">หมายเหตุ (ใส่ไปกับรายการที่กด ยืนยันจ่าย)</label>
-            <input id="pRemark" maxlength="300">
+        <form id="payForm" novalidate>
+          <div class="form-grid">
+            <div class="field wide">
+              <label for="pRental">รายการค่าเช่า *</label>
+              <div class="pay-filter">
+                <select id="pfVendor"><option value="">-- กรองผู้ขายทั้งหมด (Vendor) --</option></select>
+                <select id="pfMonth"><option value="">-- กรองรอบจ่ายรายเดือนทั้งหมด --</option></select>
+                <input id="pRental" list="dlRentals" type="search" autocomplete="off" placeholder="ค้นหาค่าใช้จ่าย (Vendor, Site, PR, PO, เลขสัญญา)...">
+                <datalist id="dlRentals"></datalist>
+              </div>
+              <div class="pay-hint" id="pfHint"></div>
+            </div>
+            <div class="field">
+              <label for="pMonth">รอบดิว *</label>
+              <input id="pMonth" type="month">
+            </div>
+            <div class="field">
+              <label for="pExpected">ยอดที่ต้องจ่าย (บาท)</label>
+              <input id="pExpected" disabled>
+            </div>
+            <div class="field">
+              <label for="pActual">ยอดที่จ่ายจริง (บาท) *</label>
+              <input id="pActual" type="number" min="0" step="0.01">
+            </div>
+            <div class="field">
+              <label for="pRemark">หมายเหตุ</label>
+              <input id="pRemark" maxlength="300">
+            </div>
+            <div class="field">
+              <label>&nbsp;</label>
+              <button type="button" class="btn btn-ghost pay-check" id="btnPayCheck" title="เปิดข้อมูลทั้งหมดของรายการที่เลือก เพื่อตรวจก่อนบันทึก">🔍 ตรวจสอบรายละเอียด</button>
+            </div>
           </div>
           <label class="check"><input type="checkbox" id="pMarkPaid"> เปลี่ยน Status Payment ใน Contract_Master เป็น "เบิกแล้ว"</label>
-        </div>
+          <button type="submit" class="btn btn-primary" id="btnPay" style="width:auto;padding:12px 28px;margin-top:14px;">บันทึกการเบิกจ่าย</button>
+        </form>
       </div>
 
       <div class="card">
