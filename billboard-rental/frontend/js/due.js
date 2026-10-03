@@ -20,6 +20,7 @@ const Due = {
     $('btnTestAlert').addEventListener('click', () => this.openTest());
     const now = new Date();
     $('mailMonth').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    this.initWithdraw();
   },
 
   /** งวดที่ต้องจ่าย: เลยกำหนด + ภายใน dueSoonDays วัน เรียงตามวันที่
@@ -63,7 +64,170 @@ const Due = {
       });
     }
 
+    this.renderWithdraw();
     if (!this.settingsLoaded) this.loadSettings();
+  },
+
+  /* ---------- หน้าต่างการเบิก: รอเบิก / เบิกแล้ว แยกตามประเภทการจ่าย ---------- */
+  WD_TYPES: [
+    { key: 'all',       label: 'ทั้งหมด' },
+    { key: 'monthly',   label: 'รายเดือน' },
+    { key: 'quarterly', label: 'ราย 3 เดือน' },
+    { key: 'yearly',    label: 'รายปี' }
+  ],
+  MONTHS_TH: ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'],
+  wd: { view: 'wait', type: 'all', month: '', sel: new Set() },
+
+  initWithdraw() {
+    document.querySelectorAll('input[name="wdView"]').forEach(r => r.addEventListener('change', () => {
+      this.wd.view = r.value;
+      this.wd.sel.clear();
+      this.renderWithdraw();
+    }));
+    $('wdMonth').addEventListener('change', () => { this.wd.month = $('wdMonth').value; this.wd.sel.clear(); this.renderWithdraw(); });
+    $('wdAll').addEventListener('change', () => {
+      const on = $('wdAll').checked;
+      this.wdRows().forEach(g => on ? this.wd.sel.add(g.id) : this.wd.sel.delete(g.id));
+      this.renderWithdraw();
+    });
+    $('btnWdApply').addEventListener('click', () => this.setStatus());
+  },
+
+  /** ประเภทการจ่ายของงวด: monthly | quarterly | yearly | other */
+  freqOf(g) {
+    if (g.freq) return g.freq;
+    const p = String(g.payment || '');
+    if (/ปี|year/i.test(p)) return 'yearly';
+    if (/3|ไตรมาส|quarter/i.test(p)) return 'quarterly';
+    if (/เดือน|month/i.test(p)) return 'monthly';
+    return 'other';
+  },
+
+  /** งวดทั้งหมดของมุมมอง: รอเบิก = งวดที่ยังต้องจ่าย (ไม่รวมงวดของปีก่อน) · เบิกแล้ว = paidGroups จาก backend */
+  wdAllOf(view) {
+    if (!Store.data) return [];
+    return view === 'done'
+      ? (Store.data.paidGroups || [])
+      : (Store.data.payGroups || []).filter(g => g.payAlert !== 'prior' && g.payStatus !== 'เบิกแล้ว');
+  },
+
+  /** งวดในมุมมอง + เดือนที่เลือก (ก่อนกรองประเภท) */
+  wdBase(view) {
+    const m = this.wd.month;
+    return this.wdAllOf(view).filter(g => !m || String(g.payDate || '').slice(0, 7) === m);
+  },
+
+  wdRows() {
+    const t = this.wd.type;
+    const rows = this.wdBase(this.wd.view).filter(g => t === 'all' || this.freqOf(g) === t);
+    return this.wd.view === 'done'
+      ? rows.sort((a, b) => String(b.payDate).localeCompare(String(a.payDate)))
+      : rows.sort((a, b) => a.daysToPay - b.daysToPay);
+  },
+
+  renderWithdraw() {
+    if (!Store.data) return;
+    const w = this.wd;
+    const done = w.view === 'done';
+    const admin = Store.isAdmin();
+
+    // ตัวเลือกเดือน (จากวันที่ต้องจ่ายของงวดในมุมมองนี้)
+    const months = [...new Set(this.wdAllOf(w.view)
+      .filter(g => g.payDate)
+      .map(g => String(g.payDate).slice(0, 7)))].sort();
+    if (w.month && months.indexOf(w.month) < 0) w.month = '';
+    $('wdMonth').innerHTML = '<option value="">ทุกเดือน</option>' + months.map(m => {
+      const [y, mm] = m.split('-');
+      return `<option value="${m}"${m === w.month ? ' selected' : ''}>${this.MONTHS_TH[+mm - 1] || mm} ${+y + 543}</option>`;
+    }).join('');
+
+    $('wdCntWait').textContent = this.wdBase('wait').length;
+    $('wdCntDone').textContent = this.wdBase('done').length;
+
+    // การ์ดประเภท: จำนวนงวด + ยอดรวม
+    const base = this.wdBase(w.view);
+    $('wdTypes').innerHTML = this.WD_TYPES.map(t => {
+      const list = t.key === 'all' ? base : base.filter(g => this.freqOf(g) === t.key);
+      const sum = list.reduce((s, g) => s + g.amount, 0);
+      return `<button type="button" class="wd-type${t.key === w.type ? ' on' : ''}" data-type="${t.key}">
+        <span class="wd-type-label">${t.label}</span>
+        <span class="wd-type-sum">${fmtMoney(sum)} <small>บาท</small></span>
+        <span class="wd-type-cnt">${list.length} งวด</span>
+      </button>`;
+    }).join('');
+    $('wdTypes').querySelectorAll('.wd-type').forEach(b => b.addEventListener('click', () => {
+      w.type = b.dataset.type;
+      w.sel.clear();
+      this.renderWithdraw();
+    }));
+
+    // ตาราง
+    const rows = this.wdRows();
+    const ids = new Set(rows.map(g => g.id));
+    [...w.sel].forEach(id => { if (!ids.has(id)) w.sel.delete(id); });
+    $('wdColExtra').textContent = done ? 'MEMO/INV · PO' : 'เหลือ (วัน)';
+    document.querySelectorAll('#wdCard .wd-chk').forEach(el => el.classList.toggle('hidden', !admin));
+    const tb = $('wdBody');
+    if (!rows.length) {
+      tb.innerHTML = `<tr><td colspan="9"><div class="empty">${done ? 'ยังไม่มีรายการที่เบิกแล้ว' : 'ไม่มีรายการรอเบิก'}</div></td></tr>`;
+    } else {
+      tb.innerHTML = rows.map(g => `
+        <tr data-id="${g.id}" class="${w.sel.has(g.id) ? 'wd-picked' : ''}">
+          ${admin ? `<td class="wd-chk"><input type="checkbox" data-pick="${g.id}"${w.sel.has(g.id) ? ' checked' : ''}></td>` : ''}
+          <td class="cell-strong">${fmtDate(g.payDate)}<div class="cell-mute">${g.payKind === 'cheque' ? 'เช็คลงวันที่' : 'ชำระตามสัญญา'}</div></td>
+          <td>${esc(g.vendorName)}</td>
+          <td>${esc(g.mediaSite)}</td>
+          <td>${esc(g.contractNo || '-')}</td>
+          <td>${esc(g.payment)}<div class="cell-mute">${esc(g.months.length > 1 ? `${g.months[0]} – ${g.months[g.months.length - 1]}` : g.months[0] || '')}</div></td>
+          <td class="num">${fmtMoney(g.amount)}</td>
+          <td>${done
+            ? `${esc(g.memoInv || g.ecmNo || '-')}<div class="cell-mute">${g.po ? 'PO ' + esc(g.po) : ''}</div>`
+            : `<span class="num">${alertDot(g.payAlert)}${fmtDays(g.daysToPay)}</span>`}</td>
+          <td>${statusBadge(g.payStatus)}</td>
+        </tr>`).join('');
+      tb.querySelectorAll('tr[data-id]').forEach(tr => {
+        tr.addEventListener('click', e => {
+          const cb = e.target.closest('input[data-pick]');
+          if (cb) {
+            cb.checked ? w.sel.add(cb.dataset.pick) : w.sel.delete(cb.dataset.pick);
+            this.renderWithdraw();
+            return;
+          }
+          if (e.target.closest('.wd-chk')) return;
+          Rentals.openDetail(tr.dataset.id);
+        });
+      });
+    }
+    $('wdAll').checked = rows.length > 0 && rows.every(g => w.sel.has(g.id));
+
+    // แถบดำเนินการ (admin)
+    const picked = rows.filter(g => w.sel.has(g.id));
+    $('wdBar').classList.toggle('hidden', !admin || !picked.length);
+    $('wdSel').textContent = `เลือก ${picked.length} งวด · ${fmtMoney(picked.reduce((s, g) => s + g.amount, 0))} บาท`;
+    $('wdMemo').classList.toggle('hidden', done);
+    $('btnWdApply').textContent = done ? `↺ กลับเป็นรอเบิก (${picked.length})` : `✓ ทำเครื่องหมายเบิกแล้ว (${picked.length})`;
+  },
+
+  async setStatus() {
+    const w = this.wd;
+    const picked = this.wdRows().filter(g => w.sel.has(g.id));
+    if (!picked.length) return;
+    const status = w.view === 'done' ? 'รอเบิก' : 'เบิกแล้ว';
+    const memoInv = status === 'เบิกแล้ว' ? $('wdMemo').value.trim() : '';
+    const sum = fmtMoney(picked.reduce((s, g) => s + g.amount, 0));
+    if (!confirm(`เปลี่ยน Status Payment ของ ${picked.length} งวด (${sum} บาท) เป็น "${status}"?`)) return;
+    const btn = $('btnWdApply');
+    btn.disabled = true;
+    const r = await apiGuarded('setPayStatus', {
+      groups: picked.map(g => ({ contractNo: g.contractNo, rows: g.rows })),
+      status, memoInv
+    });
+    btn.disabled = false;
+    if (!r) return;
+    w.sel.clear();
+    $('wdMemo').value = '';
+    toast(`บันทึก "${status}" แล้ว ${r.groups} งวด (${r.rows} แถว)`);
+    App.load(false, true);
   },
 
   showSettings(r) {
