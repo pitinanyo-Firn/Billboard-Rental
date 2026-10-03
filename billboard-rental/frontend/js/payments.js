@@ -2,7 +2,7 @@
    PLAN B — BILLBOARD RENTAL HUB  |  js/payments.js
    บันทึกการเบิกจ่าย (Payment_History) · ติดตามใบเสร็จ (Receipt_Tracking)
    รายการค่าเช่า = ทุกแถวใน Contract_Master (1 แถว = 1 รอบเดือน)
-     กรอง Vendor / Media Site → ค้นหา (Vendor, Site, PR, PO, เลขสัญญา) เลือกรายการ
+     กรอง Vendor / รอบจ่ายรายเดือน / Media Site → ค้นหา (Vendor, Site, PR, PO, เลขสัญญา) เลือกรายการ
      → 🔍 ตรวจสอบรายละเอียด → บันทึกการเบิกจ่าย
    ============================================================ */
 
@@ -17,6 +17,11 @@ const Payments = {
     $('pRental').addEventListener('change', () => this.pick($('pRental').value));
     $('pRental').addEventListener('input', () => this.pick($('pRental').value));
     $('pfVendor').addEventListener('change', () => { this.renderFilters(); this.refilter(); });
+    $('pfMonth').addEventListener('change', () => {
+      if ($('pfMonth').value) $('pMonth').value = $('pfMonth').value;
+      this.renderFilters();
+      this.refilter();
+    });
     $('pfSite').addEventListener('change', () => this.refilter());
     $('btnPayCheck').addEventListener('click', () => this.checkDetail());
     $('fReceipt').addEventListener('change', () => this.renderReceipts());
@@ -67,17 +72,19 @@ const Payments = {
     };
     const vendors = [...new Set(rows.map(d => d.vendorName).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'th'));
     fill($('pfVendor'), '-- กรองผู้ขายทั้งหมด (Vendor) --', vendors.map(v => ({ v, t: v })));
-    // Media Site — แสดงเฉพาะ Site ของ Vendor ที่เลือก (ถ้าเลือก)
-    const v = $('pfVendor').value;
-    const sites = [...new Set(rows.filter(d => !v || d.vendorName === v).map(d => d.mediaSite).filter(Boolean))]
-      .sort((a, b) => a.localeCompare(b, 'th'));
+    const yms = [...new Set(rows.map(d => this.ymOf(d)).filter(Boolean))].sort();
+    fill($('pfMonth'), '-- กรองรอบจ่ายรายเดือนทั้งหมด --', yms.map(v => ({ v, t: this.ymLabel(v) })));
+    // Media Site — แสดงเฉพาะ Site ของ Vendor / รอบจ่ายที่เลือก (ถ้าเลือก)
+    const v = $('pfVendor').value, ym = $('pfMonth').value;
+    const sites = [...new Set(rows.filter(d => (!v || d.vendorName === v) && (!ym || this.ymOf(d) === ym))
+      .map(d => d.mediaSite).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'th'));
     fill($('pfSite'), '-- กรอง Media Site ทั้งหมด --', sites.map(s => ({ v: s, t: s })));
   },
 
   filtered() {
-    const v = $('pfVendor').value, s = $('pfSite').value;
+    const v = $('pfVendor').value, ym = $('pfMonth').value, s = $('pfSite').value;
     return Store.data.rentals
-      .filter(d => (!v || d.vendorName === v) && (!s || d.mediaSite === s))
+      .filter(d => (!v || d.vendorName === v) && (!ym || this.ymOf(d) === ym) && (!s || d.mediaSite === s))
       .sort((a, b) => (this.ymOf(a) || '9').localeCompare(this.ymOf(b) || '9') ||
                       a.vendorName.localeCompare(b.vendorName, 'th') || a._row - b._row);
   },
@@ -127,6 +134,7 @@ const Payments = {
     if (!d) return;
     App.switchTab('payments');
     $('pfVendor').value = '';
+    $('pfMonth').value = '';
     this.renderFilters();
     $('pfSite').value = '';
     this.refilter();
