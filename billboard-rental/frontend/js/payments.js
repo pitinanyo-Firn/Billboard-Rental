@@ -122,6 +122,8 @@ const Payments = {
     $('pExpected').value = d ? fmtMoney(d.installment) : '';
     if (d && d !== prev) {
       $('pActual').value = d.installment || '';
+      $('pMemoInv').value = d.memoInv || '';
+      $('pEcmNo').value = d.ecmNo || '';
       const ym = this.ymOf(d);
       if (ym) $('pMonth').value = ym;
     }
@@ -167,7 +169,8 @@ const Payments = {
     btn.textContent = 'กำลังบันทึก…';
     const r = await api('recordPayment', {
       id: d.id, contractNo: d.contractNo, month: $('pMonth').value,
-      actual: $('pActual').value, remark: $('pRemark').value, markPaid: $('pMarkPaid').checked, force
+      actual: $('pActual').value, remark: $('pRemark').value, markPaid: $('pMarkPaid').checked, force,
+      memoInv: $('pMemoInv').value.trim(), ecmNo: $('pEcmNo').value.trim()
     });
     btn.disabled = false;
     btn.textContent = 'บันทึกการเบิกจ่าย';
