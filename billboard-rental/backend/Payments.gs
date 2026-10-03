@@ -189,6 +189,49 @@ function apiSetPayStatus_(token, p) {
   return { ok: true, status: status, groups: groups.length, rows: rowCount };
 }
 
+/**
+ * ลบรายการประวัติการเบิกจ่าย (admin) — p: { id: 'P<row>', timestamp, vendor, site, month }
+ * ลบรายการติดตามใบเสร็จที่บันทึกมาพร้อมกัน (Timestamp + Vendor + Media Site ตรงกัน) ด้วย
+ * ไม่แก้ Status Payment / MEMO / ECM ใน Contract_Master
+ */
+function apiDeletePayment_(token, p) {
+  const me = authAdmin_(token);
+  if (!me) return forbidden_('ลบประวัติการเบิกจ่าย');
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  let values = [];
+  let receipt = false;
+  try {
+    const row = parseInt(String(p.id || '').replace(/^P/, ''), 10);
+    const sh = ss_().getSheetByName(CFG.SHEET_PAYMENT);
+    if (!sh || !row || row < 2 || row > sh.getLastRow()) return { ok: false, code: 'NOT_FOUND', message: 'ไม่พบรายการเบิกจ่าย' };
+    values = sh.getRange(row, 1, 1, PAYMENT_HEADER.length).getDisplayValues()[0];
+    if (clean_(values[0]) !== clean_(p.timestamp) || clean_(values[1]) !== clean_(p.vendor) ||
+        clean_(values[2]) !== clean_(p.site) || clean_(values[3]) !== clean_(p.month)) {
+      return { ok: false, code: 'STALE', message: 'ข้อมูลในชีตมีการเปลี่ยนแปลง กรุณากด ↻ รีเฟรช แล้วลองใหม่' };
+    }
+    sh.deleteRow(row);
+
+    const rs = ss_().getSheetByName(CFG.SHEET_RECEIPT);
+    if (rs && rs.getLastRow() > 1) {
+      const rr = rs.getRange(2, 1, rs.getLastRow() - 1, 3).getDisplayValues();
+      for (let i = rr.length - 1; i >= 0; i--) {
+        if (clean_(rr[i][0]) === clean_(values[0]) && clean_(rr[i][1]) === clean_(values[1]) && clean_(rr[i][2]) === clean_(values[2])) {
+          rs.deleteRow(i + 2);
+          receipt = true;
+          break;
+        }
+      }
+    }
+    SpreadsheetApp.flush();
+  } finally {
+    lock.releaseLock();
+  }
+  invalidateData_();
+  writeLog_(me.email, 'DELETE_PAYMENT', values.join(' | ') + (receipt ? ' | + ลบรายการติดตามใบเสร็จ' : ''));
+  return { ok: true, receipt: receipt };
+}
+
 /** หาแถวใน Receipt_Tracking + ตรวจว่ายังเป็นรายการเดิม */
 function receiptRow_(p) {
   const row = parseInt(String(p.id || '').replace(/^T/, ''), 10);
