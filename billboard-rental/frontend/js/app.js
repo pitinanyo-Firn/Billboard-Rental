@@ -41,6 +41,8 @@ const App = {
     $('userName').textContent = p.name || p.email || '-';
     $('avatar').textContent   = (p.name || 'U').charAt(0).toUpperCase();
     document.querySelector('.tab[data-tab="members"]').classList.toggle('hidden', p.role !== 'admin');
+    $('btnTestAlert').classList.toggle('hidden', p.role !== 'admin');
+    if (p.role === 'admin') Due.loadSettings();          // รายชื่อผู้รับสำหรับปุ่มทดสอบแจ้งเตือน
 
     this.load(false).then(() => Sync.start());
   },

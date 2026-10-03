@@ -17,6 +17,7 @@ const Due = {
     $('btnMonPreview').addEventListener('click', () => this.preview('monthly'));
     $('btnMonSelf').addEventListener('click', () => this.send('monthly', true));
     $('btnMonAll').addEventListener('click', () => this.send('monthly', false));
+    $('btnTestAlert').addEventListener('click', () => this.openTest());
     const now = new Date();
     $('mailMonth').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   },
@@ -114,6 +115,72 @@ const Due = {
     const close = () => { $('drawerHost').innerHTML = ''; };
     $('btnCloseDetail').addEventListener('click', close);
     $('drawerMask').addEventListener('click', e => { if (e.target.id === 'drawerMask') close(); });
+  },
+
+  /* ---------- ปุ่ม 🔔 ทดสอบแจ้งเตือน (ส่งได้ทุกเวลา) ---------- */
+  openTest() {
+    const all = this.recipients.length ? this.recipients.join(', ') : 'ผู้รับแจ้งเตือนทั้งหมด';
+    $('drawerHost').innerHTML = `
+    <div class="drawer-mask" id="drawerMask">
+      <div class="drawer" style="width:min(560px,100%)">
+        <div class="drawer-head">
+          <div><h2>🔔 ทดสอบแจ้งเตือนทางอีเมล</h2>
+            <div class="sub">ส่งได้ทุกเวลา · การส่งอัตโนมัติทุกวัน 08:00 น. ยังทำงานตามปกติ</div></div>
+          <div class="spacer"></div>
+          <button class="icon-btn" id="btnCloseDetail" title="ปิด">✕</button>
+        </div>
+        <div class="drawer-body">
+          <div class="card">
+            <div class="card-head"><h2>อีเมลที่จะส่ง</h2></div>
+            <div class="test-opts">
+              <label class="check"><input type="checkbox" id="tRound0" checked> ① ครั้งที่ 1 — แจ้งเตือนล่วงหน้า 7 วัน</label>
+              <label class="check"><input type="checkbox" id="tRound1" checked> ② ครั้งที่ 2 — แจ้งเตือนล่วงหน้า 3 วัน</label>
+              <label class="check"><input type="checkbox" id="tMonthly"> ③ สรุปงานเดือนนี้</label>
+            </div>
+            <div class="cell-mute" style="margin-top:10px">ถ้าวันนี้ไม่มีรายการที่ครบในอีก 7 / 3 วัน ระบบจะใช้งวดถัดไปเป็นตัวอย่าง · หัวเรื่องขึ้นต้นด้วย [ทดสอบ]</div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h2>ส่งถึง</h2></div>
+            <div class="test-opts">
+              <label class="check"><input type="radio" name="tTo" value="self" checked> เฉพาะฉัน</label>
+              <label class="check"><input type="radio" name="tTo" value="all"> ผู้รับทั้งหมด (${esc(all)})</label>
+            </div>
+          </div>
+          <div id="testResult" class="member-result hidden"></div>
+          <div class="edit-actions">
+            <div class="spacer"></div>
+            <button type="button" class="btn btn-ghost" id="btnTestCancel">ปิด</button>
+            <button type="button" class="btn btn-primary" id="btnTestSend">🔔 ส่งอีเมลทดสอบ</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+    const close = () => { $('drawerHost').innerHTML = ''; };
+    $('btnCloseDetail').addEventListener('click', close);
+    $('btnTestCancel').addEventListener('click', close);
+    $('drawerMask').addEventListener('click', e => { if (e.target.id === 'drawerMask') close(); });
+    $('btnTestSend').addEventListener('click', () => this.sendTest());
+  },
+
+  async sendTest() {
+    const rounds = [0, 1].filter(i => $('tRound' + i).checked);
+    const monthly = $('tMonthly').checked;
+    const to = document.querySelector('input[name="tTo"]:checked').value;
+    if (!rounds.length && !monthly) return toast('กรุณาเลือกอีเมลอย่างน้อย 1 ฉบับ');
+    if (to === 'all' && !confirm('ส่งอีเมลทดสอบถึงผู้รับทั้งหมด?')) return;
+    const btn = $('btnTestSend');
+    btn.disabled = true;
+    btn.textContent = 'กำลังส่ง…';
+    const r = await apiGuarded('testAlert', { rounds, monthly, to }, true);
+    btn.disabled = false;
+    btn.textContent = '🔔 ส่งอีเมลทดสอบ';
+    if (!r) return;
+    const el = $('testResult');
+    el.innerHTML = `ส่งแล้ว ${r.sent.length} ฉบับ → <b>${esc(r.to.join(', '))}</b>
+      <ul style="margin:8px 0 0 18px">${r.sent.map(s => `<li>${esc(s)}</li>`).join('')}</ul>
+      <div class="cell-mute" style="margin-top:8px">การส่งอัตโนมัติทุกวัน: ${r.auto ? '<b class="ok-text">เปิดอยู่</b>' : '<b class="warn-text">ปิดอยู่</b>'}</div>`;
+    el.classList.remove('hidden');
+    toast(`ส่งอีเมลทดสอบแล้ว ${r.sent.length} ฉบับ`);
   },
 
   async send(type, toSelf) {
