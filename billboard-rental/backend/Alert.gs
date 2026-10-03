@@ -231,32 +231,60 @@ function advanceTable_(title, color, note, rows) {
  */
 function advanceEmails_() {
   const groups = payGroups_(readRentals_()).filter(function (g) { return g.amount && g.payAlert !== 'prior'; });
-  const offsets = alertOffsets_();
   const today = todayISO_();
   const out = [];
-  offsets.forEach(function (n, i) {
+  alertOffsets_().forEach(function (n, i) {
     const rows = groups.filter(function (g) { return g.daysToPay === n; }).sort(byPayDate_);
-    if (!rows.length) return;
-    const sum = rows.reduce(function (s, d) { return s + d.amount; }, 0);
-    const round = 'ครั้งที่ ' + (i + 1);
-    const color = n <= 3 ? '#DC2626' : '#D97706';
-    const due = fmtThDate_(addDays_(today, n));
-    const email = buildEmail_('⏰ [Billboard Rental] ' + round + ' แจ้งเตือนล่วงหน้า ' + n + ' วัน — ครบกำหนด ' + due +
-                              ' · ' + rows.length + ' รายการ · ' + fmtMoney_(sum) + ' บาท', {
-      title: round + ' — แจ้งเตือนล่วงหน้า ' + n + ' วัน',
-      subtitle: 'รายการที่ครบกำหนดจ่ายวันที่ ' + due + ' · ข้อมูล ณ วันที่ ' + fmtThDate_(today),
-      accent: n <= 3 ? '#B91C1C' : MSTYLE.BRAND,
-      stats: [
-        ['รอบแจ้งเตือน', round, 'ก่อนถึงกำหนด ' + n + ' วัน', color],
-        ['วันที่ต้องจ่าย', due, 'อีก ' + n + ' วัน', MSTYLE.INK],
-        ['ยอดที่ต้องเตรียม', fmtMoney_(sum), rows.length + ' รายการ', color]
-      ],
-      sections: [advanceTable_('ครบกำหนดในอีก ' + n + ' วัน', color, 'วันที่ต้องจ่าย ' + due, rows)]
-    });
-    email.summary = round + ' (อีก ' + n + ' วัน) ' + rows.length + ' รายการ';
-    out.push(email);
+    if (rows.length) out.push(roundEmail_(n, i, rows, today, addDays_(today, n), ''));
   });
   return out;
+}
+
+/** อีเมลของ 1 รอบ · payIso = วันที่ต้องจ่ายของรายการในฉบับ · testNote = ข้อความกำกับเมื่อเป็นอีเมลทดสอบ */
+function roundEmail_(n, i, rows, today, payIso, testNote) {
+  const sum = rows.reduce(function (s, d) { return s + d.amount; }, 0);
+  const round = 'ครั้งที่ ' + (i + 1);
+  const color = n <= 3 ? '#DC2626' : '#D97706';
+  const due = payIso ? fmtThDate_(payIso) : '-';
+  const left = payIso ? daysBetween_(today, payIso) : null;
+  const email = buildEmail_((testNote ? '[ทดสอบ] ' : '') + '⏰ [Billboard Rental] ' + round + ' แจ้งเตือนล่วงหน้า ' + n +
+                            ' วัน — ครบกำหนด ' + due + ' · ' + rows.length + ' รายการ · ' + fmtMoney_(sum) + ' บาท', {
+    title: (testNote ? '[ทดสอบ] ' : '') + round + ' — แจ้งเตือนล่วงหน้า ' + n + ' วัน',
+    subtitle: (testNote ? testNote + ' · ' : '') + 'รายการที่ครบกำหนดจ่ายวันที่ ' + due + ' · ข้อมูล ณ วันที่ ' + fmtThDate_(today),
+    accent: n <= 3 ? '#B91C1C' : MSTYLE.BRAND,
+    stats: [
+      ['รอบแจ้งเตือน', round, 'ก่อนถึงกำหนด ' + n + ' วัน', color],
+      ['วันที่ต้องจ่าย', due, left === null ? '' : 'อีก ' + left + ' วัน', MSTYLE.INK],
+      ['ยอดที่ต้องเตรียม', fmtMoney_(sum), rows.length + ' รายการ', color]
+    ],
+    sections: rows.length ? [advanceTable_('ครบกำหนดวันที่ ' + due, color, testNote || ('อีก ' + n + ' วัน'), rows)] : [],
+    empty: 'ไม่มีรายการที่ยังไม่ถึงกำหนดจ่ายในระบบ'
+  });
+  email.summary = (testNote ? 'ทดสอบ ' : '') + round + ' (อีก ' + n + ' วัน) ' + rows.length + ' รายการ';
+  return email;
+}
+
+/**
+ * อีเมลทดสอบที่ส่งได้ทุกเวลา — 1 ฉบับต่อรอบ (7 วัน / 3 วัน)
+ * ถ้าวันนี้มีรายการจริงในรอบนั้น ใช้รายการจริง · ถ้าไม่มี ใช้งวดถัดไปที่ใกล้ที่สุดเป็นตัวอย่าง
+ * หัวเรื่องขึ้นต้นด้วย [ทดสอบ] ทุกฉบับ — ไม่กระทบการส่งอัตโนมัติ
+ */
+function testRoundEmails_() {
+  const groups = payGroups_(readRentals_()).filter(function (g) { return g.amount && g.payAlert !== 'prior'; });
+  const today = todayISO_();
+  const upcoming = groups.filter(function (g) { return g.daysToPay >= 0; }).sort(byPayDate_);
+  return alertOffsets_().map(function (n, i) {
+    let rows = groups.filter(function (g) { return g.daysToPay === n; }).sort(byPayDate_);
+    let payIso = addDays_(today, n), note = 'อีเมลทดสอบ — รายการจริงของรอบนี้';
+    if (!rows.length) {
+      // งวดถัดไปที่ไกลอย่างน้อย n วัน (ถ้าไม่มี ใช้งวดใกล้ที่สุด)
+      const next = upcoming.filter(function (g) { return g.daysToPay >= n; })[0] || upcoming[0];
+      payIso = next ? next.payDate : '';
+      rows = next ? upcoming.filter(function (g) { return g.payDate === next.payDate; }) : [];
+      note = 'อีเมลทดสอบ — วันนี้ไม่มีรายการที่ครบในอีก ' + n + ' วัน จึงแสดงงวดถัดไปเป็นตัวอย่าง';
+    }
+    return roundEmail_(n, i, rows, today, payIso, note);
+  });
 }
 
 /** แจ้งเตือนล่วงหน้าทั้งหมดของวันนี้รวมเป็นหน้าเดียว (ใช้ดูตัวอย่างบนเว็บ) — null ถ้าไม่มี */
@@ -440,6 +468,30 @@ function apiPreviewEmail_(token, p) {
     ? monthlyEmail_(/^\d{4}-\d{2}$/.test(p.month || '') ? p.month : todayISO_().slice(0, 7))
     : (advanceEmail_() || noAdvanceEmail_());
   return { ok: true, subject: email.subject, html: email.html, to: alertRecipients_() };
+}
+
+/**
+ * ปุ่ม "🔔 ทดสอบแจ้งเตือน" — admin กดส่งทดสอบได้ทุกเวลา (การส่งอัตโนมัติทุกวัน 08:00 ยังทำงานตามปกติ)
+ * p.to: 'self' (ตัวเอง) | 'all' (ผู้รับทั้งหมด)
+ * p.rounds: [0, 1] = ครั้งที่ 1 / ครั้งที่ 2 · p.monthly: true = สรุปงานเดือนนี้
+ */
+function apiTestAlert_(token, p) {
+  const me = authAdmin_(token);
+  if (!me) return forbidden_('ทดสอบการแจ้งเตือน');
+  invalidateData_();
+  const to = p.to === 'all' ? alertRecipients_() : [selfEmail_(me)];
+  const rounds = Array.isArray(p.rounds) ? p.rounds.map(Number) : [0, 1];
+  const list = testRoundEmails_().filter(function (e, i) { return rounds.indexOf(i) > -1; });
+  if (p.monthly) {
+    const mon = monthlyEmail_(todayISO_().slice(0, 7));
+    mon.subject = '[ทดสอบ] ' + mon.subject;
+    mon.summary = 'ทดสอบ ' + mon.summary;
+    list.push(mon);
+  }
+  if (!list.length) return { ok: false, code: 'MISSING_FIELD', message: 'กรุณาเลือกอีเมลที่ต้องการทดสอบอย่างน้อย 1 ฉบับ' };
+  list.forEach(function (e) { sendEmail_(to, e); });
+  writeLog_(me.email, 'ALERT_TEST', list.map(function (e) { return e.summary; }).join(' | ') + ' → ' + to.join(','));
+  return { ok: true, sent: list.map(function (e) { return e.subject; }), to: to, auto: alertTriggerOn_() };
 }
 
 /**

@@ -65,6 +65,7 @@ function route_(action, p) {
       case 'applyFixes':       return apiApplyFixes_(p.token);
       case 'getAlertSettings': return apiAlertSettings_(p.token);
       case 'sendAlertNow':     return apiSendAlertNow_(p.token, p);
+      case 'testAlert':        return apiTestAlert_(p.token, p);
       case 'previewEmail':     return apiPreviewEmail_(p.token, p);
       case 'installAlerts':    return apiInstallAlerts_(p.token);
       case 'getNewContracts':  return apiNewContracts_(p.token);
