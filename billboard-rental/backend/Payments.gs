@@ -71,7 +71,7 @@ function monthLabel_(ym) {
 
 /**
  * บันทึกการเบิกจ่าย 1 รายการ (admin)
- * p: { id: 'R<row>', contractNo, month: 'yyyy-MM', actual, remark, markPaid, force }
+ * p: { id: 'R<row>', contractNo, month: 'yyyy-MM', actual, remark, markPaid, force, memoInv, ecmNo }
  */
 function apiRecordPayment_(token, p) {
   const me = authAdmin_(token);
@@ -87,6 +87,9 @@ function apiRecordPayment_(token, p) {
   const actual = Number(String(p.actual == null ? '' : p.actual).replace(/,/g, ''));
   if (!isFinite(actual) || actual <= 0) return { ok: false, code: 'INVALID_VALUE', message: 'ยอดที่จ่ายจริงต้องเป็นตัวเลขมากกว่า 0' };
   const remark = clean_(p.remark).slice(0, 300);
+  const memoInv = clean_(p.memoInv).slice(0, 100);
+  const ecmNo = clean_(p.ecmNo).slice(0, 100);
+  const docs = [];
 
   const key = payKey_(rental.vendorName, rental.mediaSite, month);
   if (!p.force && readPayments_().some(function (x) { return payKey_(x.vendor, x.site, x.month) === key; })) {
@@ -103,10 +106,18 @@ function apiRecordPayment_(token, p) {
     ensureSheet_(CFG.SHEET_RECEIPT, RECEIPT_HEADER)
       .appendRow([ts, safe(rental.vendorName), safe(rental.mediaSite), actual, RECEIPT_STATUSES[0]]);
 
+    const src = findDataSheet_();
     if (p.markPaid && !isPaid_(rental.payStatus)) {
-      const src = findDataSheet_();
       src.sheet.getRange(rental._row, src.map.payStatus + 1).setValue(PAY_DONE);
     }
+    // MEMO/INV No. / ECM No. ที่กรอกในฟอร์ม → เขียนลงแถวใน Contract_Master (ช่องว่าง = ไม่แก้ค่าเดิม)
+    [['memoInv', memoInv], ['ecmNo', ecmNo]].forEach(function (f) {
+      if (!f[1] || src.map[f[0]] === undefined || f[1] === clean_(rental[f[0]])) return;
+      const c = src.sheet.getRange(rental._row, src.map[f[0]] + 1);
+      c.setNumberFormat('@');
+      c.setValue(safe(f[1]));
+      docs.push(f[0] === 'memoInv' ? 'MEMO/INV ' + f[1] : 'ECM ' + f[1]);
+    });
     SpreadsheetApp.flush();
   } finally {
     lock.releaseLock();
@@ -114,7 +125,7 @@ function apiRecordPayment_(token, p) {
 
   invalidateData_();
   writeLog_(me.email, 'RECORD_PAYMENT', rental.contractNo + ' | ' + rental.vendorName + ' | ' + month + ' | ' + actual +
-            (p.markPaid ? ' | Status Payment → ' + PAY_DONE : ''));
+            (p.markPaid ? ' | Status Payment → ' + PAY_DONE : '') + (docs.length ? ' | ' + docs.join(' | ') : ''));
   return { ok: true, month: month };
 }
 
