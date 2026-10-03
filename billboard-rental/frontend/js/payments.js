@@ -237,13 +237,14 @@ const Payments = {
     $('payCount').textContent = `${rows.length} รายการ` + (dups ? ` · บันทึกซ้ำ ${dups} รายการ` : '');
     const tb = $('payBody');
     if (!rows.length) {
-      tb.innerHTML = '<tr><td colspan="8"><div class="empty">ยังไม่มีการบันทึกจ่าย</div></td></tr>';
+      tb.innerHTML = '<tr><td colspan="9"><div class="empty">ยังไม่มีการบันทึกจ่าย</div></td></tr>';
       return;
     }
+    const admin = Store.isAdmin();
     tb.innerHTML = rows.map(p => {
       const diff = p.actual - p.expected;
       return `
-      <tr>
+      <tr data-id="${p.id}">
         <td>${esc(p.timestamp)}</td>
         <td class="cell-strong">${esc(p.vendor)}</td>
         <td>${esc(p.site)}</td>
@@ -252,7 +253,22 @@ const Payments = {
         <td class="num">${fmtMoney(p.actual)}</td>
         <td class="num">${diff ? `<span class="${diff < 0 ? 'neg' : 'warn-text'}">${fmtMoney(diff)}</span>` : '-'}</td>
         <td>${esc(p.remark)}</td>
+        <td>${admin ? '<div class="rc-actions"><button class="icon-btn pay-del" title="ลบรายการ">🗑</button></div>' : ''}</td>
       </tr>`;
     }).join('');
+
+    if (!admin) return;
+    tb.querySelectorAll('.pay-del').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const p = Store.data.payments.find(x => x.id === btn.closest('tr').dataset.id);
+        if (!p) return;
+        if (!confirm(`ลบประวัติการเบิกจ่าย ${p.vendor} · ${p.site} รอบ ${p.month} (${fmtMoney(p.actual)} บาท)?\n` +
+                     'รายการติดตามใบเสร็จที่บันทึกพร้อมกันจะถูกลบด้วย')) return;
+        btn.disabled = true;
+        const r = await apiGuarded('deletePayment', { id: p.id, timestamp: p.timestamp, vendor: p.vendor, site: p.site, month: p.month });
+        if (r) { toast('ลบประวัติการเบิกจ่ายแล้ว'); await App.load(false, true); }
+        else btn.disabled = false;
+      });
+    });
   }
 };
