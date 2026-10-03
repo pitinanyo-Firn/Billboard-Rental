@@ -43,6 +43,16 @@
 .mail-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
 .mail-preview{width:100%;height:68vh;border:1px solid var(--line);border-radius:var(--r-sm);background:#fff}
 
+/* ---------- ย่อ/ขยายตารางที่ยาว (js/fold.js) ---------- */
+tr.fold-hide{display:none}
+.fold-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 4px 0;border-top:1px dashed var(--line,#E5E7EB);margin-top:4px}
+.fold-bar .btn-sm{width:auto}
+.fold-toggle{margin-left:8px;padding:4px 10px;border:1px solid var(--line,#E5E7EB);border-radius:999px;background:transparent;
+  color:inherit;font:inherit;font-size:12px;cursor:pointer;white-space:nowrap;opacity:.8}
+.fold-toggle:hover{opacity:1;border-color:currentColor}
+.filter-bar > .fold-toggle{margin-left:auto}
+.card.folded .table-wrap,.card.folded .fold-bar,.card.folded .wd-types,.card.folded .wd-bar{display:none !important}
+
 /* ---------- ครบกำหนดจ่าย: หน้าต่างการเบิก ---------- */
 #wdCard .card-head{flex-wrap:wrap;gap:12px}
 .wd-view span{padding:8px 18px}
