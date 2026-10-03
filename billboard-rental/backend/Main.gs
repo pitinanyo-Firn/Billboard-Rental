@@ -67,6 +67,9 @@ function route_(action, p) {
       case 'sendAlertNow':     return apiSendAlertNow_(p.token, p);
       case 'previewEmail':     return apiPreviewEmail_(p.token, p);
       case 'installAlerts':    return apiInstallAlerts_(p.token);
+      case 'getNewContracts':  return apiNewContracts_(p.token);
+      case 'addNewContract':   return apiAddNewContract_(p.token, p);
+      case 'deleteNewContract': return apiDeleteNewContract_(p.token, p);
       case 'getMembers':       return apiMembers_(p.token);
       case 'addMember':        return apiAddMember_(p.token, p);
       case 'updateMember':     return apiUpdateMember_(p.token, p);

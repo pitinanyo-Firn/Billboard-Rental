@@ -8,7 +8,7 @@
 $ErrorActionPreference = 'Stop'
 $here  = Split-Path -Parent $MyInvocation.MyCommand.Path
 $dist  = Join-Path $here 'dist'
-$order = 'Config.gs', 'Main.gs', 'Auth.gs', 'Data.gs', 'Api.gs', 'Payments.gs', 'Edit.gs', 'Alert.gs', 'AI.gs', 'Members.gs', 'Setup.gs'
+$order = 'Config.gs', 'Main.gs', 'Auth.gs', 'Data.gs', 'Api.gs', 'Payments.gs', 'NewContract.gs', 'Edit.gs', 'Alert.gs', 'AI.gs', 'Members.gs', 'Setup.gs'
 $utf8  = New-Object System.Text.UTF8Encoding($false)
 
 # ล้างไฟล์เวอร์ชันเก่าใน dist (ลบเฉพาะไฟล์ — โฟลเดอร์ที่เปิดค้างใน Explorer ลบไม่ได้)

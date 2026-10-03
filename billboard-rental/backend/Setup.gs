@@ -17,6 +17,7 @@ function setupSystem() {
   ensureSheet_(CFG.SHEET_PAYMENT, PAYMENT_HEADER);
   ensureSheet_(CFG.SHEET_RECEIPT, RECEIPT_HEADER);
   ensureSheet_(CFG.SHEET_LOCATION, LOCATION_HEADER);
+  ncSheet_();
   applyStatusDropdowns();
 
   const users = ensureUserSheet_();
