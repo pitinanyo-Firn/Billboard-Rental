@@ -53,6 +53,9 @@
 .seg input:focus-visible + span{box-shadow:inset 0 0 0 3px rgba(228,0,43,.35)}
 #ncBody tr{cursor:default}
 
+.test-opts{display:grid;gap:10px}
+.member-result ul li{margin:2px 0}
+
 /* ---------- สมาชิก ---------- */
 .mini-avatar{width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:-6px;margin-right:7px}
 #memberBody tr{cursor:default}
