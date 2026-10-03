@@ -118,6 +118,66 @@ function apiRecordPayment_(token, p) {
   return { ok: true, month: month };
 }
 
+/**
+ * เปลี่ยน Status Payment ของงวดที่เลือก (admin) — หน้าต่างการเบิก ในแท็บครบกำหนดจ่าย
+ * p: { groups: [{ contractNo, rows: ['R<row>', ...] }], status: 'เบิกแล้ว' | 'รอเบิก', memoInv }
+ * 1 งวด = หลายแถวรายเดือน (ราย 3 เดือน / รายปี) → เปลี่ยนทุกแถวของงวดพร้อมกัน
+ * memoInv (ไม่บังคับ): ใส่เลข MEMO/INV No. ให้แถวที่ยังว่าง
+ */
+function apiSetPayStatus_(token, p) {
+  const me = authAdmin_(token);
+  if (!me) return forbidden_('เปลี่ยนสถานะการเบิก');
+
+  const status = clean_(p.status);
+  if (PAY_STATUSES.indexOf(status) < 0) return { ok: false, code: 'INVALID_VALUE', message: 'สถานะต้องเป็น ' + PAY_STATUSES.join(' / ') };
+  const groups = Array.isArray(p.groups) ? p.groups : [];
+  if (!groups.length) return { ok: false, code: 'MISSING_FIELD', message: 'กรุณาเลือกงวดอย่างน้อย 1 รายการ' };
+  if (groups.length > 300) return { ok: false, code: 'INVALID_VALUE', message: 'เลือกได้ครั้งละไม่เกิน 300 งวด' };
+  const memo = clean_(p.memoInv).slice(0, 100);
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(15000);
+  const done = [];
+  let rowCount = 0;
+  try {
+    const src = findDataSheet_();
+    const sh = src.sheet, map = src.map;
+    const last = sh.getLastRow();
+    // ตรวจทุกแถวก่อน — ถ้ามีแถวใดไม่ตรง (มีคนแทรก/ลบแถว) จะไม่เขียนเลย
+    const targets = [];
+    for (let i = 0; i < groups.length; i++) {
+      const g = groups[i] || {};
+      const rows = (Array.isArray(g.rows) ? g.rows : []).map(function (id) { return parseInt(String(id).replace(/^R/, ''), 10); });
+      if (!rows.length) return { ok: false, code: 'MISSING_FIELD', message: 'ข้อมูลงวดไม่ครบ' };
+      for (let j = 0; j < rows.length; j++) {
+        const r = rows[j];
+        if (!r || r <= src.headerRow || r > last ||
+            clean_(sh.getRange(r, map.contractNo + 1).getDisplayValue()) !== clean_(g.contractNo)) {
+          return { ok: false, code: 'STALE', message: 'ข้อมูลในชีตมีการเปลี่ยนแปลง กรุณากด ↻ รีเฟรช แล้วลองใหม่' };
+        }
+        targets.push(r);
+      }
+      done.push(clean_(g.contractNo));
+    }
+    targets.forEach(function (r) {
+      sh.getRange(r, map.payStatus + 1).setValue(status);
+      if (memo && status === PAY_DONE && map.memoInv !== undefined) {
+        const c = sh.getRange(r, map.memoInv + 1);
+        if (!clean_(c.getDisplayValue())) { c.setNumberFormat('@'); c.setValue(/^[=+\-@]/.test(memo) ? "'" + memo : memo); }
+      }
+    });
+    rowCount = targets.length;
+    SpreadsheetApp.flush();
+  } finally {
+    lock.releaseLock();
+  }
+
+  invalidateData_();
+  writeLog_(me.email, 'SET_PAY_STATUS', status + ' | ' + groups.length + ' งวด / ' + rowCount + ' แถว | ' +
+            done.join(', ') + (memo ? ' | MEMO/INV ' + memo : ''));
+  return { ok: true, status: status, groups: groups.length, rows: rowCount };
+}
+
 /** หาแถวใน Receipt_Tracking + ตรวจว่ายังเป็นรายการเดิม */
 function receiptRow_(p) {
   const row = parseInt(String(p.id || '').replace(/^T/, ''), 10);

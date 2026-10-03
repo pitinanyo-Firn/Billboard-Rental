@@ -48,13 +48,17 @@ function payGroups_(data) {
         id: d.id, contractNo: d.contractNo, company: d.company, vendorName: d.vendorName,
         mediaSite: d.mediaSite, mediaType: d.mediaType, payment: d.payment, rent: d.rent,
         payDate: d.payDate, payKind: d.payKind, daysToPay: d.daysToPay, payAlert: d.payAlert,
-        payStatus: d.payStatus, amount: 0, months: [], rows: []
+        payStatus: d.payStatus, freq: d.freq, memoInv: '', ecmNo: '', po: '',
+        amount: 0, months: [], rows: []
       };
     }
     const g = map[key];
     addToCycle_(g, d);
     g.months.push(d.month);
     g.rows.push(d.id);
+    if (!g.memoInv && d.memoInv) g.memoInv = d.memoInv;
+    if (!g.ecmNo && d.ecmNo) g.ecmNo = d.ecmNo;
+    if (!g.po && d.po) g.po = d.po;
     // งวดถือว่ายังไม่เบิก ถ้ามีแถวใดยังรอเบิก
     if (d.payStatus !== PAY_DONE) { g.payStatus = d.payStatus; g.payAlert = d.payAlert; }
   });
@@ -63,6 +67,42 @@ function payGroups_(data) {
     g.amount = cycleAmount_(g);
     return g;
   }).sort(function (a, b) { return a.payDate < b.payDate ? -1 : a.payDate > b.payDate ? 1 : 0; });
+}
+
+/**
+ * งวดที่เบิกแล้ว (สำหรับหน้าต่างการเบิก → เบิกแล้ว)
+ * แถวที่เบิกแล้วไม่มี payDate (ไม่ต้องจ่ายแล้ว) — จัดกลุ่มตามวันชำระตามสัญญา (หรือวันที่เช็ค) แทน
+ */
+function paidGroups_(data) {
+  const map = {};
+  const today = todayISO_();
+  data.forEach(function (d) {
+    if (d.payStatus !== PAY_DONE) return;
+    const date = d.dueDate || d.chequeDate || '';
+    const key = [d.contractNo, d.vendorNo, d.mediaSite, date].join('|');
+    if (!map[key]) {
+      map[key] = {
+        id: d.id, contractNo: d.contractNo, company: d.company, vendorName: d.vendorName,
+        mediaSite: d.mediaSite, mediaType: d.mediaType, payment: d.payment, rent: d.rent,
+        payDate: date, payKind: d.dueDate ? 'due' : (d.chequeDate ? 'cheque' : ''),
+        daysToPay: date ? daysBetween_(today, date) : null, payAlert: 'paid',
+        payStatus: PAY_DONE, freq: d.freq, memoInv: '', ecmNo: '', po: '',
+        amount: 0, months: [], rows: []
+      };
+    }
+    const g = map[key];
+    addToCycle_(g, d);
+    g.months.push(d.month);
+    g.rows.push(d.id);
+    if (!g.memoInv && d.memoInv) g.memoInv = d.memoInv;
+    if (!g.ecmNo && d.ecmNo) g.ecmNo = d.ecmNo;
+    if (!g.po && d.po) g.po = d.po;
+  });
+  return Object.keys(map).map(function (k) {
+    const g = map[k];
+    g.amount = cycleAmount_(g);
+    return g;
+  }).sort(function (a, b) { return a.payDate < b.payDate ? 1 : a.payDate > b.payDate ? -1 : 0; });
 }
 
 /** ค่าเช่าที่ต้องจ่ายรายเดือน 12 เดือนข้างหน้า — รวมยอดงวดตามเดือนของวันชำระตามสัญญา */
@@ -184,6 +224,7 @@ function apiDashboard_(token) {
     },
     rentals: data,
     payGroups: groups,
+    paidGroups: paidGroups_(data),
     payments: payments,
     receipts: receipts,
     receiptStatuses: RECEIPT_STATUSES,

@@ -59,6 +59,7 @@ function route_(action, p) {
       case 'updateRental':     return apiUpdateRental_(p.token, p);
       case 'getPayments':      return apiPayments_(p.token);
       case 'recordPayment':    return apiRecordPayment_(p.token, p);
+      case 'setPayStatus':     return apiSetPayStatus_(p.token, p);
       case 'updateReceipt':    return apiUpdateReceipt_(p.token, p);
       case 'deleteReceipt':    return apiDeleteReceipt_(p.token, p);
       case 'previewFixes':     return apiPreviewFixes_(p.token);
