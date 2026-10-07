@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>คู่มือการใช้งาน — Billboard Rental Hub</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  /* คู่มือ: เนื้อหาจาก ../USER_MANUAL.md (แหล่งเดียวกับใน GitHub) */
+  .man{display:grid;grid-template-columns:250px minmax(0,1fr);gap:22px;align-items:start}
+  .man-toc{position:sticky;top:76px;max-height:calc(100vh - 96px);overflow:auto;padding:14px 10px}
+  .man-toc b{display:block;padding:0 8px 8px;font-size:12px;color:var(--muted);letter-spacing:.3px}
+  .man-toc a{display:block;padding:6px 8px;border-radius:7px;color:var(--ink-2);text-decoration:none;font-size:13px;line-height:1.35}
+  .man-toc a:hover{background:var(--bg)}
+  .man-toc a.on{background:#FFF1F3;color:var(--brand);font-weight:700}
+  .man-body{padding:28px 34px;line-height:1.75;font-size:14.5px;color:var(--ink-2)}
+  .man-body h1{font-size:26px;color:var(--ink);margin-bottom:6px}
+  .man-body h2{font-size:20px;color:var(--ink);margin:34px 0 12px;padding-top:18px;border-top:1px solid var(--line);scroll-margin-top:76px}
+  .man-body h3{font-size:16px;color:var(--ink);margin:22px 0 8px;scroll-margin-top:76px}
+  .man-body p,.man-body ul,.man-body ol{margin:8px 0}
+  .man-body ul,.man-body ol{padding-left:24px}
+  .man-body li{margin:3px 0}
+  .man-body a{color:var(--info)}
+  .man-body hr{display:none}
+  .man-body table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13.5px}
+  .man-body th,.man-body td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  .man-body th{background:var(--bg);color:var(--ink);font-weight:700;white-space:nowrap}
+  .man-body code{background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:12.5px}
+  .man-body pre{background:#0F172A;color:#E2E8F0;border-radius:var(--r-sm);padding:14px 16px;overflow:auto;font-size:13px;line-height:1.6}
+  .man-body pre code{background:none;border:0;padding:0;color:inherit}
+  .man-body blockquote{margin:12px 0;padding:10px 14px;border-left:4px solid var(--brand);background:#FFF7F8;border-radius:0 var(--r-sm) var(--r-sm) 0}
+  .man-body blockquote p{margin:2px 0}
+  .man-wrap-table{overflow-x:auto}
+  .man-msg{padding:40px;text-align:center;color:var(--muted)}
+  .topbar a.btn{text-decoration:none}
+  @media (max-width:900px){
+    .man{grid-template-columns:minmax(0,1fr)}
+    .man-toc{position:static;max-height:none}
+    .man-body{padding:20px 16px}
+    main{padding:16px}
+  }
+  @media print{
+    .topbar,.man-toc{display:none}
+    .man{display:block}
+    .card{box-shadow:none;border:0}
+    .man-body{padding:0}
+    .man-body h2{break-after:avoid}
+    .man-body table,.man-body pre{break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <span class="mark">PB</span>
+  <h1>Billboard Rental Hub</h1>
+  <span class="meta">คู่มือการใช้งาน</span>
+  <div class="spacer"></div>
+  <button class="btn btn-ghost" type="button" onclick="window.print()">⎙ พิมพ์ / PDF</button>
+  <a class="btn btn-ghost" href="./">← กลับเข้าระบบ</a>
+</header>
+
+<main>
+  <div class="man">
+    <nav class="card man-toc" id="toc"><b>สารบัญ</b></nav>
+    <article class="card man-body" id="doc"><div class="man-msg">กำลังโหลดคู่มือ…</div></article>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script>
+(async function () {
+  const doc = document.getElementById('doc');
+  const toc = document.getElementById('toc');
+  const REPO = 'https://github.com/pitinanyo-Firn/Billboard-Rental/blob/main/billboard-rental/';
+  try {
+    const res = await fetch('../USER_MANUAL.md', { cache: 'no-cache' });
+    if (!res.ok) throw new Error(res.status);
+    doc.innerHTML = marked.parse(await res.text());
+  } catch (e) {
+    doc.innerHTML = '<div class="man-msg">โหลดคู่มือไม่สำเร็จ — เปิดอ่านได้ที่ <a href="' + REPO + 'USER_MANUAL.md">GitHub</a></div>';
+    return;
+  }
+
+  // ลิงก์ไปไฟล์ .md อื่นใน repo → เปิดบน GitHub · ลิงก์ภายนอกเปิดแท็บใหม่
+  doc.querySelectorAll('a[href]').forEach(a => {
+    const h = a.getAttribute('href');
+    if (/^[\w.-]+\.md$/.test(h)) a.href = REPO + h;
+    if (/^https?:/.test(a.href) && a.host !== location.host) { a.target = '_blank'; a.rel = 'noopener'; }
+  });
+  // ตารางกว้าง → เลื่อนแนวนอนได้บนมือถือ
+  doc.querySelectorAll('table').forEach(t => {
+    const w = document.createElement('div');
+    w.className = 'man-wrap-table';
+    t.parentNode.insertBefore(w, t);
+    w.appendChild(t);
+  });
+
+  // สารบัญจากหัวข้อระดับ 2
+  const heads = [...doc.querySelectorAll('h2')];
+  heads.forEach((h, i) => {
+    h.id = 'sec-' + (i + 1);
+    const a = document.createElement('a');
+    a.href = '#' + h.id;
+    a.textContent = h.textContent;
+    toc.appendChild(a);
+  });
+  const links = [...toc.querySelectorAll('a')];
+  const spy = () => {
+    let cur = 0;
+    heads.forEach((h, i) => { if (h.getBoundingClientRect().top < 120) cur = i; });
+    links.forEach((a, i) => a.classList.toggle('on', i === cur));
+  };
+  window.addEventListener('scroll', spy, { passive: true });
+  spy();
+  if (location.hash) { const t = document.getElementById(location.hash.slice(1)); if (t) t.scrollIntoView(); }
+})();
+</script>
+</body>
+</html>
