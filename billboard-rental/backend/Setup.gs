@@ -54,6 +54,9 @@ function applyStatusDropdowns() {
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('⚙️ Billboard Rental')
+    .addItem('📖 คู่มือการใช้งาน', 'menuOpenManual')
+    .addItem('🌐 เปิดหน้าเว็บ', 'menuOpenSite')
+    .addSeparator()
     .addItem('ติดตั้งระบบครั้งแรก', 'setupSystem')
     .addItem('ล้าง Cache ข้อมูล', 'menuClearCache')
     .addItem('ตั้ง Dropdown สถานะในชีต', 'applyStatusDropdowns')
@@ -67,6 +70,25 @@ function onOpen() {
     .addItem('ส่งอีเมลทดสอบ (แจ้งเตือนล่วงหน้า)', 'testAlertEmail')
     .addItem('ส่งอีเมลทดสอบ (สรุปเดือนนี้)', 'testMonthlyEmail')
     .addToUi();
+}
+
+/** ลิงก์หน้าเว็บ — Script property SITE_URL หรือ URL ที่ deploy บน Vercel */
+function siteUrl_() {
+  return String(prop_('SITE_URL', '') || 'https://billboard-rental-5igo.vercel.app/')
+    .replace(/\/+$/, '').replace(/\/frontend$/, '');
+}
+
+function menuOpenManual() { openLink_(siteUrl_() + '/frontend/manual.html', 'คู่มือการใช้งาน'); }
+function menuOpenSite()   { openLink_(siteUrl_() + '/', 'Billboard Rental Hub'); }
+
+/** เปิดลิงก์ในแท็บใหม่จากเมนูชีต (ถ้าเบราว์เซอร์บล็อก popup ให้กดลิงก์ในหน้าต่างแทน) */
+function openLink_(url, title) {
+  const u = url.replace(/"/g, '&quot;');
+  const html = HtmlService.createHtmlOutput(
+    '<div style="font:14px sans-serif;padding:4px">เปิด <a href="' + u + '" target="_blank">' + title + '</a></div>' +
+    '<script>if (window.open("' + u + '", "_blank")) google.script.host.close();</script>'
+  ).setWidth(320).setHeight(70);
+  SpreadsheetApp.getUi().showModelessDialog(html, title);
 }
 
 function menuClearCache() {
