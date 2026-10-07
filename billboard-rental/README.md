@@ -1,6 +1,8 @@
 # Plan B — Billboard Rental Hub
 
-ระบบติดตามค่าเช่าป้ายโฆษณาและการเบิกจ่าย — Dashboard + ทะเบียนค่าเช่า + ครบกำหนดจ่าย + บันทึกจ่าย/ใบเสร็จ + ตรวจสอบข้อมูล + **ผู้ช่วย AI**
+ระบบติดตามค่าเช่าป้ายโฆษณาและการเบิกจ่าย — Dashboard + ทะเบียนค่าเช่า + New Contract + ครบกำหนดจ่าย + บันทึกจ่าย/ใบเสร็จ + Accrued + ตรวจสอบข้อมูล + **ผู้ช่วย AI**
+
+> 📖 **คู่มือการใช้งานสำหรับผู้ใช้:** [`USER_MANUAL.md`](USER_MANUAL.md) · ฉบับเว็บ https://billboard-rental-5igo.vercel.app/frontend/manual.html
 
 โครงสร้างและดีไซน์เดียวกับ Contract Rental Hub (frontend แยกจาก backend, login, ซิงค์สองทางกับชีต) — แทนที่โค้ด "Billboard ERP" เดิมใน Apps Script
 
@@ -19,8 +21,8 @@
 |---|---|
 | **หน้าเว็บ (Vercel)** | https://billboard-rental-5igo.vercel.app/ |
 | **Web app API** | https://script.google.com/macros/s/AKfycbyPAZq-VdvGBxH8CfoXKqDKvh8t6oLdWtTOuXFPl2VL0CZqYqQifyzjyzW7Ib5-ETXRrg/exec |
-| **Apps Script** | [Billboard Rental](https://script.google.com/home/projects/1-6nGq5g24XJjqjqgTfWYgiQyLfzQyvVxeLUZuaBXVlqh1vG6XymqgZVS/edit) · Version 47 |
-| **ผู้ดูแลระบบ** | `admin-rental` / `P@ssword` — เปลี่ยนรหัสหลังเข้าใช้ครั้งแรก |
+| **Apps Script** | [Billboard Rental](https://script.google.com/home/projects/1-6nGq5g24XJjqjqgTfWYgiQyLfzQyvVxeLUZuaBXVlqh1vG6XymqgZVS/edit) · Version 60 |
+| **ผู้ดูแลระบบ** | `admin-rental` — ขอรหัสผ่านจากผู้ดูแลระบบ |
 
 ยังไม่ได้เปิด: ผู้ช่วย AI (ต้องตั้ง Script property `ANTHROPIC_API_KEY`)
 
@@ -51,9 +53,10 @@
 | **Login** | Email + Password (SHA-256 + salt ในชีต `Users`) · session 8 ชม. · log ทุกครั้ง · role `admin` / `viewer` |
 | **Dashboard** | KPI 10 ตัว · ค่าเช่าต่อปีแยกประเภทสื่อ · ครบกำหนดจ่ายเร็ว ๆ นี้ · ประมาณการค่าเช่า 12 เดือน · สถานะการเบิกตามประเภทสื่อ · บริษัท · External vs Inter-Co · สัญญาหมดอายุ |
 | **ทะเบียนค่าเช่า** | ค้นหา + ตัวกรอง 6 ชั้น · คลิกแถวเปิดรายละเอียด · admin ✎ แก้ไขทุกช่อง → เขียนลงชีตทันที + audit log |
-| **New Contract** | admin กรอกสัญญาใหม่ — ส่วนที่ 1 Company, ผู้ขาย, Vendor No., Contract No., PR, PO, Start/End Contract, Payment (รายเดือน / รายปี / ราย 3 เดือน) · ส่วนที่ 2 Location (Media Type, Media Site, Epicore Code, Part Code, Part Description, ค่าเช่าตามสัญญา) เพิ่มได้หลาย Location → บันทึกลงแท็บ `New_Contract` ในชีต · กันบันทึกซ้ำ · ลบได้ |
-| **ครบกำหนดจ่าย** | เลยกำหนด + ภายใน 30 วัน (วันชำระตามสัญญา หรือเช็คลงวันที่) · สถานะอีเมลแจ้งเตือน · admin ส่งสรุปเองได้ |
-| **บันทึกจ่าย / ใบเสร็จ** | บันทึกลง `Payment_History` + สร้างรายการ `Receipt_Tracking` · กันบันทึกซ้ำ · เปลี่ยนสถานะ/ลบใบเสร็จ (admin) · แสดงส่วนต่างยอด |
+| **New Contract** | admin กรอกสัญญาใหม่ — ส่วนที่ 1 Company, ผู้ขาย, Vendor No., Contract No., PR, PO, Start/End Contract, Payment (รายเดือน / รายปี / ราย 3 เดือน) · ส่วนที่ 2 Location (Media Type, Media Site, Epicore Code, Part Code, Part Description, ค่าเช่าตามสัญญา) เพิ่มได้หลาย Location → แทรกลง `Contract_Master` ต่อท้ายเดือนที่เลือก (ลำดับถัดไป · 1 Location = 1 แถว) · กันบันทึกซ้ำ · ลบได้ |
+| **ครบกำหนดจ่าย** | เลยกำหนด + ภายใน 30 วัน (วันชำระตามสัญญา หรือเช็คลงวันที่) · สถานะอีเมลแจ้งเตือน · admin ส่งสรุปเองได้ · **หน้าต่างการเบิก** รอเบิก → เบิกแล้ว → จ่ายแล้ว แยกรายเดือน / ราย 3 เดือน / รายปี เปลี่ยนสถานะทีละหลายงวด (`setPayStatus`) |
+| **บันทึกจ่าย / ใบเสร็จ** | กรอง Vendor → รอบเดือน → Media Site → ค้นหา · บันทึกลง `Payment_History` + สร้างรายการ `Receipt_Tracking` · เขียน MEMO/INV No. + ECM No. ลง Contract_Master · กันบันทึกซ้ำ · เปลี่ยนสถานะ/ลบใบเสร็จ · ลบประวัติ (admin) · แสดงส่วนต่างยอด |
+| **Accrued** | รายการ Accrued ประจำเดือน (ค่าใช้จ่ายเกิดแล้วตาม Service Month แต่ยังไม่มี Transaction) ส่งบัญชีทุกวันที่ 23 · ชีต `Accrued` คอลัมน์ A–M ตรง Form Accrued (STT-BB-BUS-OTHER) + N–P ติดตาม · ดึงรายการที่ยังไม่เบิกจาก Contract_Master · เพิ่ม/แก้/ลบ (admin) · Export Excel ([`Accrued.gs`](backend/Accrued.gs)) |
 | **ตรวจสอบข้อมูล** | ตรวจทุกแถวใน `Contract_Master` · แก้อัตโนมัติได้: วันที่เขียนเป็น ด/ว/ป, คำสะกดผิด, ช่องว่างเกิน |
 | **✦ ผู้ช่วย AI** | ถามเป็นภาษาไทย เช่น "เดือนหน้าต้องเตรียมเงินจ่ายค่าเช่ารวมเท่าไหร่" |
 | **สมาชิก** | admin เพิ่ม/แก้สิทธิ์/ปิดใช้งาน/รีเซ็ตรหัสผ่าน/ลบผู้ใช้จากหน้าเว็บ · เข้าสู่ระบบด้วยอีเมลหรือชื่อผู้ใช้ |
@@ -109,12 +112,18 @@
 | `updateRental` | `token`, `id`, `contractNo`, `fields{}` (admin) | `{ok, id, changed, rental, version}` · ผิดจะได้ `errors{field}` |
 | `getPayments` | `token` | `{ok, payments, receipts}` |
 | `recordPayment` | `token`, `id`, `contractNo`, `month` (`yyyy-MM`), `actual`, `remark`, `markPaid`, `force` (admin) | `{ok, month}` · ซ้ำได้ `DUPLICATE` |
+| `deletePayment` | `token`, `id`, `timestamp`, `vendor`, `site`, `month` (admin) | `{ok}` |
+| `setPayStatus` | `token`, `groups[]`, `status`, `memoInv?` (admin) | `{ok, groups, rows}` |
 | `updateReceipt` / `deleteReceipt` | `token`, `id`, `timestamp`, `vendor`, `status?` (admin) | `{ok}` |
 | `previewFixes` / `applyFixes` | `token` (admin) | `{ok, fixes}` / `{ok, applied, skipped}` |
 | `getAlertSettings` | `token` | `{ok, triggerOn, hour, offsets, recipientCount, recipients}` |
 | `sendAlertNow` | `token`, `type` (`advance`/`monthly`), `month`, `toSelf` (admin) | `{ok, subject, to}` |
 | `previewEmail` | `token`, `type`, `month` (admin) | `{ok, subject, html, to}` |
-| `installAlerts` | `token` (admin) | สถานะการแจ้งเตือน |
+| `installAlerts` / `testAlert` | `token` (admin) | สถานะการแจ้งเตือน / `{ok, sent}` |
+| `getNewContracts` / `addNewContract` / `deleteNewContract` | `token`, ข้อมูลสัญญา + `locations[]` + `month` (admin) | `{ok, list}` / `{ok, month, nos}` |
+| `getAccrued` | `token` | `{ok, accrued, day}` |
+| `addAccrued` | `token`, `month` (`yyyy-MM`), `items[]` (admin) | `{ok, added, month}` |
+| `updateAccrued` / `deleteAccrued` | `token`, `id` (`A<row>`), `origVendor`, `origMonth`, `month`, fields (admin) | `{ok, id}` / `{ok}` · ชีตถูกแก้ก่อนได้ `STALE` |
 | `exportCSV` / `clearCache` | `token` | `{ok, csv}` / `{ok}` |
 | `getMembers` | `token` (admin) | `{ok, me, members}` |
 | `addMember` | `token`, `email`, `name`, `role`, `password?`, … (admin) | `{ok, email, tempPassword}` |

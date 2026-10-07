@@ -1,4 +1,4 @@
-> **สถานะปัจจุบัน:** ติดตั้งและ deploy เรียบร้อยแล้ว — เว็บ https://billboard-rental-5igo.vercel.app/ · Apps Script Version 47 · ล็อกอิน `admin-rental` / `P@ssword`
+> **สถานะปัจจุบัน:** ติดตั้งและ deploy เรียบร้อยแล้ว — เว็บ https://billboard-rental-5igo.vercel.app/ · Apps Script Version 60 · คู่มือผู้ใช้: [`USER_MANUAL.md`](USER_MANUAL.md)
 > คู่มือนี้ใช้เมื่อย้ายไปชีต/โปรเจกต์ใหม่ หรือกู้ระบบ
 
 # SETUP_GUIDE.md — ติดตั้ง Billboard Rental Hub
@@ -21,10 +21,11 @@
    | `ALERT_OFFSETS` | เตือนล่วงหน้ากี่วัน (ค่าเริ่มต้น `7,3` = ครั้งที่ 1 ก่อน 7 วัน · ครั้งที่ 2 ก่อน 3 วัน) |
    | `SITE_URL` | ลิงก์หน้าเว็บ Vercel (ใส่ปุ่มในอีเมล) |
 7. อีเมลเตือน: รัน `installAlertTrigger` (ลบ trigger `sendPaymentAlertEmails` ของโค้ดเดิมให้เอง)
+   Accrued: รัน `setupAccrued` ครั้งเดียว — สร้างชีต `Accrued` ตาม Form ของบัญชี (+ นำเข้ารายการ Sep-26 จากไฟล์ Excel ถ้ายังไม่มี)
 8. **Deploy → New deployment → Web app** · Execute as: **Me** · Who has access: **Anyone** → คัดลอก URL ที่ลงท้าย `/exec`
 9. ทดสอบ: เปิด `<URL>?action=ping` ต้องได้ `{"ok":true,"service":"Billboard Rental Hub API","version":"1.0.0"}`
 
-> ครั้งต่อไปที่แก้โค้ด: Deploy → **Manage deployments** → ✎ → Version: **New version** (URL เดิมใช้ต่อได้)
+> ครั้งต่อไปที่แก้โค้ด: Deploy → **Manage deployments** → ✎ → Version: **New version** (URL เดิมใช้ต่อได้) → แล้วรัน `installAlertTrigger` ใหม่ (trigger ผูกกับเวอร์ชันที่ติดตั้ง)
 
 ## 2. แก้ข้อมูลในชีต
 
