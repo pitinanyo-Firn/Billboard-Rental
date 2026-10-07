@@ -15,7 +15,7 @@ New-Item -ItemType Directory -Force $out | Out-Null
 Get-ChildItem $out -Recurse -File -Force | Remove-Item -Force
 
 $items = 'frontend', 'backend', 'tools', 'index.html', '.nojekyll', 'vercel.json', '.gitignore',
-         'README.md', 'FILE_STRUCTURE.md', 'SETUP_GUIDE.md'
+         'README.md', 'FILE_STRUCTURE.md', 'SETUP_GUIDE.md', 'USER_MANUAL.md'
 $skip = '\\backend\\dist\\|\.xlsx$|\.csv$|\.clasp\.json$|\.clasprc\.json$|\.env$'   # ไฟล์ build / ข้อมูลจริง / คีย์
 foreach ($i in $items) {
   $src = Join-Path $root $i
