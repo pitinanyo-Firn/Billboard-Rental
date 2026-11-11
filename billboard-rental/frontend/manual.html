@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 <style>
-  /* คู่มือ: เนื้อหาจาก ../USER_MANUAL.md (แหล่งเดียวกับใน GitHub) */
+  /* คู่มือ: เนื้อหาจาก USER_MANUAL.md (สำเนาใน frontend/ สร้างโดย tools/prepare-upload.ps1 จากไฟล์หลักใน repo) */
   .man{display:grid;grid-template-columns:250px minmax(0,1fr);gap:22px;align-items:start}
   .man-toc{position:sticky;top:76px;max-height:calc(100vh - 96px);overflow:auto;padding:14px 10px}
   .man-toc b{display:block;padding:0 8px 8px;font-size:12px;color:var(--muted);letter-spacing:.3px}
@@ -78,7 +78,9 @@
   const toc = document.getElementById('toc');
   const REPO = 'https://github.com/pitinanyo-Firn/Billboard-Rental/blob/main/billboard-rental/';
   try {
-    const res = await fetch('../USER_MANUAL.md', { cache: 'no-cache' });
+    // Vercel เสิร์ฟ frontend/ เป็น root → ใช้สำเนาในโฟลเดอร์เดียวกัน · เปิดแบบเดิม (root = repo) → ไฟล์หลักใน ../
+    let res = await fetch('USER_MANUAL.md', { cache: 'no-cache' });
+    if (!res.ok) res = await fetch('../USER_MANUAL.md', { cache: 'no-cache' });
     if (!res.ok) throw new Error(res.status);
     doc.innerHTML = marked.parse(await res.text());
   } catch (e) {
