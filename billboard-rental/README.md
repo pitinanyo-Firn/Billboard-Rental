@@ -11,7 +11,7 @@
 | **Frontend** | HTML/CSS/JS · Vercel / GitHub Pages | [`frontend/`](frontend/) |
 | **Backend** | Google Apps Script Web App ([Billboard Rental](https://script.google.com/home/projects/1-6nGq5g24XJjqjqgTfWYgiQyLfzQyvVxeLUZuaBXVlqh1vG6XymqgZVS/edit)) | [`backend/`](backend/) |
 | **Database** | Google Sheets — [AI_Rental_Billboard_2026](https://docs.google.com/spreadsheets/d/1u79bT7EnBxU8kYmcc14NUi6ZRAc2UDOdSvWNqd2uwlU) | – |
-| **AI** | Claude API (`claude-opus-5`) เรียกจาก backend | [`backend/AI.gs`](backend/AI.gs) |
+| **AI** | Gemini API ฟรี (`gemini-3.5-flash-lite`) วิเคราะห์ความเสี่ยงประจำวัน · Claude API (`claude-opus-5`) แท็บผู้ช่วย AI | [`AIInsight.gs`](backend/AIInsight.gs) · [`AI.gs`](backend/AI.gs) |
 
 ---
 
@@ -21,7 +21,7 @@
 |---|---|
 | **หน้าเว็บ (Vercel)** | https://billboard-rental-5igo.vercel.app/ |
 | **Web app API** | https://script.google.com/macros/s/AKfycbyPAZq-VdvGBxH8CfoXKqDKvh8t6oLdWtTOuXFPl2VL0CZqYqQifyzjyzW7Ib5-ETXRrg/exec |
-| **Apps Script** | [Billboard Rental](https://script.google.com/home/projects/1-6nGq5g24XJjqjqgTfWYgiQyLfzQyvVxeLUZuaBXVlqh1vG6XymqgZVS/edit) · Version 60 |
+| **Apps Script** | [Billboard Rental](https://script.google.com/home/projects/1-6nGq5g24XJjqjqgTfWYgiQyLfzQyvVxeLUZuaBXVlqh1vG6XymqgZVS/edit) · Version 61 |
 | **ผู้ดูแลระบบ** | `admin-rental` — ขอรหัสผ่านจากผู้ดูแลระบบ |
 
 ยังไม่ได้เปิด: ผู้ช่วย AI (ต้องตั้ง Script property `ANTHROPIC_API_KEY`)
@@ -58,6 +58,9 @@
 | **บันทึกจ่าย / ใบเสร็จ** | กรอง Vendor → รอบเดือน → Media Site → ค้นหา · บันทึกลง `Payment_History` + สร้างรายการ `Receipt_Tracking` · เขียน MEMO/INV No. + ECM No. ลง Contract_Master · กันบันทึกซ้ำ · เปลี่ยนสถานะ/ลบใบเสร็จ · ลบประวัติ (admin) · แสดงส่วนต่างยอด |
 | **Accrued** | รายการ Accrued ประจำเดือน (ค่าใช้จ่ายเกิดแล้วตาม Service Month แต่ยังไม่มี Transaction) ส่งบัญชีทุกวันที่ 23 · ชีต `Accrued` คอลัมน์ A–M ตรง Form Accrued (STT-BB-BUS-OTHER) + N–P ติดตาม · ดึงรายการที่ยังไม่เบิกจาก Contract_Master · เพิ่ม/แก้/ลบ (admin) · Export Excel ([`Accrued.gs`](backend/Accrued.gs)) |
 | **ตรวจสอบข้อมูล** | ตรวจทุกแถวใน `Contract_Master` · แก้อัตโนมัติได้: วันที่เขียนเป็น ด/ว/ป, คำสะกดผิด, ช่องว่างเกิน |
+| **✦ AI สรุปความเสี่ยงประจำวัน** | trigger 08:00 → อ่าน 4 ชีต → ปิดชื่อคู่ค้า/ทำเล → **Gemini ฟรี** (หรือ Claude) วิเคราะห์ (JSON) → **AI ตัวที่ 2 ตรวจซ้ำ** (Claude ถ้ามีคีย์ ไม่งั้น Gemini 3.8 Flash) → ตรวจ 5 ชั้น (รูปแบบ, เลขสัญญาต้องมีจริง, AI ตรวจซ้ำ, เพิ่มความเสี่ยงสูงที่ AI ไม่รายงาน, ยอดเงินต้องตรงข้อมูล) → ชีต `AI_Insights` + การ์ดบน Dashboard → ความเสี่ยงสูงส่งอีเมลเอง · ไม่มี key/AI ผิดพลาด ใช้สรุปตามกฎแทน ([`AIInsight.gs`](backend/AIInsight.gs)) · หลักฐาน AI Literacy: [`AI_LITERACY_EVIDENCE.md`](AI_LITERACY_EVIDENCE.md) |
+| **📎 ไฟล์แนบ + AI ตรวจเอกสาร** | แนบไฟล์ได้ทุกรายการ (Drive + ชีต `Attachments`) · ดู/ดาวน์โหลดผ่าน API แบบเรียลไทม์ · AI อ่านรูป/PDF แล้วโค้ดเทียบกับข้อมูลทีละช่อง (ผู้รับเงิน, สัญญา, PR/PO, MEMO/INV, ทำเล, รอบเดือน, ยอด ± VAT) ([`Attach.gs`](backend/Attach.gs)) |
+| **🔑 API Key** | admin ใส่/ลบ/ทดสอบคีย์ Gemini/Claude และเลือก AI แต่ละงานจากหน้าเว็บ — คีย์อยู่ใน Script Properties ไม่ส่งกลับหน้าเว็บ ([`AISettings.gs`](backend/AISettings.gs)) |
 | **✦ ผู้ช่วย AI** | ถามเป็นภาษาไทย เช่น "เดือนหน้าต้องเตรียมเงินจ่ายค่าเช่ารวมเท่าไหร่" |
 | **สมาชิก** | admin เพิ่ม/แก้สิทธิ์/ปิดใช้งาน/รีเซ็ตรหัสผ่าน/ลบผู้ใช้จากหน้าเว็บ · เข้าสู่ระบบด้วยอีเมลหรือชื่อผู้ใช้ |
 | **อีเมลเตือน** | ตรวจทุกวัน 08:00 · ① แจ้งเตือนล่วงหน้า ครั้งที่ 1 ก่อนกำหนด 7 วัน ครั้งที่ 2 ก่อน 3 วัน · ② วันที่ 1 ของเดือน สรุปงานทั้งหมดของเดือนนั้น · ผู้รับ pitinan.yo@, vanidarat.si@, jiraporn@ · ดูตัวอย่าง/ส่งเองได้จากแท็บครบกำหนดจ่าย · ปุ่ม 🔔 ทดสอบแจ้งเตือน (มุมบนขวา) ส่งทดสอบได้ทุกเวลา ไม่กระทบการส่งอัตโนมัติ ([`Alert.gs`](backend/Alert.gs)) |
@@ -130,6 +133,9 @@
 | `updateMember` | `token`, `id`, `email`, `role?`, `active?`, `password?`, `resetPassword?` (admin) | `{ok, email, role, active, tempPassword}` |
 | `deleteMember` | `token`, `id`, `email` (admin) | `{ok, email}` |
 | `askAI` | `token`, `question`, `history[]` | `{ok, answer, model}` |
+| `getAISettings` / `saveAISettings` / `testAIKey` | `token` (admin), คีย์/ตัวเลือก | สถานะคีย์ (แค่ 4 ตัวท้าย) |
+| `getAttachments` / `uploadAttachment` / `getAttachment` / `deleteAttachment` / `verifyAttachment` | `token`, `id` (rental) หรือ `fid` + `fileId` · upload: `name`, `mime`, `data` (base64), `opId` | `{ok, files}` / `{ok, name, mime, data}` / `{ok, status, result}` |
+| `getAIInsight` / `runAIInsight` | `token` (run = admin) | `{ok, insight, aiOn}` · insight: `{ts, trigger, status: AI/RULES/INVALID/ERROR, model, summary[], risks[{level, title, detail, refs}], actions[], note}` |
 
 **Error codes:** `BAD_REQUEST` · `UNKNOWN_ACTION` · `MISSING_FIELD` · `INVALID_VALUE` · `INVALID_CREDENTIAL` · `DISABLED` · `SESSION_EXPIRED` · `NOT_FOUND` · `STALE` · `DUPLICATE` · `FORBIDDEN` · `SERVER_ERROR` · `AI_*`
 
