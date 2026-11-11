@@ -18,6 +18,7 @@ const App = {
     Quality.init();
     Members.init();
     AI.init();
+    AIKeys.init();
     this.bindShell();
 
     // กู้คืน session เดิม ถ้ายังไม่หมดอายุ
@@ -43,6 +44,7 @@ const App = {
     $('avatar').textContent   = (p.name || 'U').charAt(0).toUpperCase();
     document.querySelector('.tab[data-tab="members"]').classList.toggle('hidden', p.role !== 'admin');
     $('btnTestAlert').classList.toggle('hidden', p.role !== 'admin');
+    $('btnAIKeys').classList.toggle('hidden', p.role !== 'admin');
     if (p.role === 'admin') Due.loadSettings();          // รายชื่อผู้รับสำหรับปุ่มทดสอบแจ้งเตือน
 
     this.load(false).then(() => Sync.start());
@@ -78,6 +80,7 @@ const App = {
     Quality.render();
     NewContract.render();
     Members.load();
+    Attach.refresh();                 // drawer ที่เปิดอยู่ → ดึงรายการไฟล์ล่าสุด (เรียลไทม์)
     Sync.setState('ok');
 
     if (hard) toast('รีเฟรชข้อมูลเรียบร้อย');

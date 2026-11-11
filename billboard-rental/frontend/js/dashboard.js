@@ -9,10 +9,86 @@ const Dashboard = {
 
   /** วาดใหม่ทั้งหน้า (เรียกหลังโหลดข้อมูลสำเร็จ) */
   render() {
+    this.renderInsight();
     this.renderKPI();
     this.renderCostByMedia();
     this.renderDueSoon();
     this.renderCharts();
+  },
+
+  /* ---------- AI สรุปความเสี่ยงประจำวัน (backend: AIInsight.gs) ---------- */
+  INS_STATUS: {
+    AI:      ['ins-ai',   'วิเคราะห์โดย AI'],
+    RULES:   ['ins-rule', 'สรุปตามกฎ — ยังไม่ได้เปิด AI'],
+    INVALID: ['ins-warn', 'AI ตอบไม่ผ่านการตรวจ — ใช้สรุปตามกฎ'],
+    ERROR:   ['ins-warn', 'เรียก AI ไม่สำเร็จ — ใช้สรุปตามกฎ']
+  },
+  INS_LEVEL: { high: 'สูง', medium: 'กลาง', low: 'ต่ำ' },
+
+  renderInsight() {
+    const it = Store.data.aiInsight;
+    $('btnInsRun').classList.toggle('hidden', !Store.isAdmin());
+    if (!this.insBound) {
+      this.insBound = true;
+      $('btnInsRun').addEventListener('click', () => this.runInsight());
+    }
+    if (!it) {
+      $('insBadge').innerHTML = '';
+      $('insMeta').textContent = '';
+      return;
+    }
+    const st = this.INS_STATUS[it.status] || this.INS_STATUS.RULES;
+    $('insBadge').className = 'ins-badge ' + st[0];
+    const rv = it.checks && it.checks.review;
+    const reviewed = rv && rv.status === 'OK';
+    $('insBadge').textContent = it.status !== 'AI' ? st[1]
+      : (it.provider === 'gemini' ? 'วิเคราะห์โดย AI ฟรี (Gemini)' : 'วิเคราะห์โดย AI') +
+        (reviewed ? ` · AI ตรวจซ้ำ ${rv.score}/100` : '') + ' + ระบบตรวจแล้ว';
+    $('insMeta').textContent = `${it.ts} · ${it.trigger === 'auto' ? 'อัตโนมัติ' : 'สั่งรันเอง'}` +
+      (it.status === 'AI' ? ` · ${it.model}` : '');
+    const li = arr => arr.map(s => `<li>${esc(s)}</li>`).join('');
+    const risks = (it.risks || []).map(r => `
+      <div class="ins-risk ins-${esc(r.level)}">
+        <span class="ins-lv">${this.INS_LEVEL[r.level] || esc(r.level)}</span>
+        <div><b>${esc(r.title)}</b>${r.src === 'check' ? ' <span class="ins-added" title="AI ไม่ได้รายงาน ระบบตรวจพบและเพิ่มให้">เพิ่มโดยการตรวจ</span>' : ''}${
+          r.src === 'review' ? ' <span class="ins-added" title="AI ผู้ตรวจพบว่าขาดไป จึงเพิ่มให้">AI ผู้ตรวจเพิ่ม</span>' : ''}${
+          r.review === 'ok' ? ' <span class="ins-ok" title="AI ตัวที่ 2 ตรวจเทียบข้อมูลจริงแล้วถูกต้อง">✓ AI ตรวจแล้ว</span>' : ''}${
+          r.levelFrom ? ` <span class="ins-added" title="AI ผู้ตรวจปรับระดับให้ตรงเกณฑ์">ปรับระดับจาก${this.INS_LEVEL[r.levelFrom] || ''}</span>` : ''}
+          <div class="cell-mute">${esc(r.detail || '')}${r.refs && r.refs.length ? ' · สัญญา ' + esc(r.refs.join(', ')) : ''}</div></div>
+      </div>`).join('');
+    $('insBody').innerHTML = `
+      <div class="ins-grid">
+        <div><h3>ภาพรวม</h3><ul class="ins-list">${li(it.summary || [])}</ul>
+             <h3>สิ่งที่ควรทำวันนี้</h3><ol class="ins-list">${li(it.actions || [])}</ol></div>
+        <div><h3>ความเสี่ยง (${(it.risks || []).length})</h3>${risks || '<div class="empty">ไม่พบความเสี่ยง</div>'}</div>
+      </div>
+      ${it.checks ? `<div class="ins-checks"><b>✔ ผลตรวจคำตอบ AI</b>
+        <span class="ok">รูปแบบถูกต้อง</span>
+        ${it.checks.masked ? `<span class="ok">ปิดชื่อคู่ค้า/ทำเลก่อนส่ง ${it.checks.masked}</span>` : ''}
+        ${!rv || rv.status === 'OFF' ? '<span class="warn">ยังไม่ได้เปิด AI ตรวจซ้ำ</span>'
+          : !reviewed ? `<span class="warn">AI ตรวจซ้ำไม่สำเร็จ</span>`
+          : `<span class="${rv.rejected + rv.summaryRejected ? 'warn' : 'ok'}">AI ตรวจซ้ำ (${esc(rv.model)}) ${rv.score}/100 · ตัดข้อผิด ${rv.rejected + rv.summaryRejected} · ปรับระดับ ${rv.levelFixed} · เพิ่มที่ขาด ${rv.added}</span>`}
+        <span class="${it.checks.refsDropped ? 'warn' : 'ok'}">${it.checks.refsDropped ? 'ตัดเลขสัญญาที่ไม่มีจริง ' + it.checks.refsDropped : 'เลขสัญญาตรงข้อมูล'}</span>
+        <span class="${it.checks.added ? 'warn' : 'ok'}">${it.checks.added ? 'เพิ่มความเสี่ยงที่ AI ไม่รายงาน ' + it.checks.added : 'ครอบคลุมความเสี่ยงสูงครบ'}</span>
+        <span class="${it.checks.unverified.length ? 'warn' : 'ok'}">${it.checks.unverified.length ? 'ตัวเลขตรวจไม่พบ: ' + esc(it.checks.unverified.join(', ')) : 'ยอดเงินตรงข้อมูล'}</span>
+      </div>` : ''}
+      ${reviewed && rv.reasons && rv.reasons.length ? `<details class="ins-why"><summary>ข้อที่ AI ผู้ตรวจตัดออก (${rv.reasons.length})</summary>
+        <ul>${rv.reasons.map(s => `<li>${esc(s)}</li>`).join('')}</ul></details>` : ''}
+      <div class="ins-foot">${esc(it.note || '')}${it.emailed ? ' · ส่งอีเมลแจ้ง ' + esc(it.emailed) : ''}` +
+      `${it.tokens ? ' · tokens ' + esc(it.tokens) : ''} · ${it.ms} ms · ประวัติทั้งหมดอยู่ในชีต AI_Insights</div>`;
+  },
+
+  async runInsight() {
+    const btn = $('btnInsRun');
+    btn.disabled = true;
+    btn.textContent = 'กำลังวิเคราะห์…';
+    const r = await apiGuarded('runAIInsight');
+    btn.disabled = false;
+    btn.textContent = '✦ วิเคราะห์ตอนนี้';
+    if (!r) return;
+    Store.data.aiInsight = r.insight;
+    this.renderInsight();
+    toast(r.insight.status === 'AI' ? 'AI วิเคราะห์เสร็จแล้ว' : 'วิเคราะห์เสร็จ (สรุปตามกฎ)');
   },
 
   /* ---------- ค่าเช่าต่อปีตามประเภทสื่อ ---------- */

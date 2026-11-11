@@ -96,7 +96,7 @@ const Rentals = {
 
     tb.innerHTML = rows.map(d => `
       <tr data-id="${d.id}">
-        <td class="cell-strong">${alertDot(d.payAlert)}${esc(d.contractNo || '-')}${d.issues.length ? ' <span class="lv lv-' + Quality.worst(d) + '" title="มีปัญหาข้อมูล">!</span>' : ''}</td>
+        <td class="cell-strong">${alertDot(d.payAlert)}${esc(d.contractNo || '-')}${d.issues.length ? ' <span class="lv lv-' + Quality.worst(d) + '" title="มีปัญหาข้อมูล">!</span>' : ''}${Attach.countOf(d) ? ` <span class="att-count" title="ไฟล์แนบ">📎${Attach.countOf(d)}</span>` : ''}</td>
         <td>${esc(d.vendorName)}<div class="cell-mute">${esc(d.company)} · ${esc(d.rent)}</div></td>
         <td>${esc(d.mediaType)}</td>
         <td>${esc(d.mediaSite)}</td>
@@ -126,6 +126,7 @@ const Rentals = {
     if (!$('drawerHost').innerHTML) return;
     if (Editor.isOpen && Editor.dirty() && !confirm('มีข้อมูลที่แก้ไขแต่ยังไม่ได้บันทึก — ปิดโดยไม่บันทึก?')) return;
     Editor.isOpen = false;
+    Attach.rentalId = null;
     $('drawerHost').innerHTML = '';
   },
 
@@ -169,6 +170,12 @@ const Rentals = {
                 <span><b>${esc(CONFIG.FIELD_LABEL[i.field] || i.field)}</b> — ${esc(i.msg)}${i.fix ? ` → <span class="fix-to">${esc(i.fix)}</span>` : ''}</span></li>`).join('')}
             </ul>
           </div>` : ''}
+
+          <div class="card">
+            <div class="card-head"><h2>📎 ไฟล์แนบ &amp; AI ตรวจเอกสาร</h2><div class="spacer"></div>
+              <span class="cell-mute">ใบแจ้งหนี้ / ใบเสร็จ / Memo ของรอบ </span></div>
+            <div id="attBox"></div>
+          </div>
 
           <div class="card">
             <div class="card-head"><h2>การจ่ายรอบ ${esc(d.month || '-')}</h2><div class="spacer"></div>${statusBadge(d.payStatus)}</div>
@@ -266,6 +273,7 @@ const Rentals = {
     document.querySelectorAll('tr[data-cycle]').forEach(tr => {
       tr.addEventListener('click', () => { if (tr.dataset.cycle !== d.id) this.openDetail(tr.dataset.cycle); });
     });
+    Attach.mount(d);
     $('btnCloseDetail').addEventListener('click', () => this.closeDetail());
     $('btnPrintDetail').addEventListener('click', () => window.print());
     if ($('btnEditDetail')) $('btnEditDetail').addEventListener('click', () => Editor.open(d));
