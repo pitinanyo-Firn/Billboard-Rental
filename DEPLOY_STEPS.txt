@@ -1,0 +1,57 @@
+﻿Billboard Rental Hub — แพ็กเกจอัปเดตทั้งระบบ (Version 62)
+จัดเตรียม 11/11/2569 · ทำตามลำดับ 1 → 4 ด้วยบัญชีเจ้าของระบบ
+
+สิ่งที่อยู่ในแพ็กเกจ
+  1_GitHub_upload\   ไฟล์ทั้งหมดของ repo (โฟลเดอร์ billboard-rental/) — backend, frontend, tools, คู่มือ, เอกสาร
+  2_AppsScript\      Code.gs + appsscript.json สำหรับวางใน Apps Script
+  DEPLOY_STEPS.txt   ไฟล์นี้
+
+ฟีเจอร์ใหม่ในรอบนี้ (ยังไม่ขึ้นระบบจริง — เว็บปัจจุบันเป็นเวอร์ชัน 7 ต.ค. commit 513b385)
+  - ✦ AI สรุปความเสี่ยงประจำวัน 08:00 (Gemini ฟรี) + AI ตัวที่ 2 ตรวจซ้ำ + ระบบตรวจ 5 ชั้น → ชีต AI_Insights + การ์ดบน Dashboard
+  - 🔑 ปุ่ม API Key (admin) — ใส่/ลบ/ทดสอบคีย์ Gemini/Claude จากหน้าเว็บ
+  - 📎 ไฟล์แนบทุกรายการ (Google Drive + ชีต Attachments) — เพิ่ม/ดู/ดาวน์โหลด/ลบ แบบเรียลไทม์
+  - ✦ AI ตรวจเอกสาร (รูป/PDF) เทียบกับข้อมูลรายการทีละช่อง
+  - เอกสาร AI_LITERACY_EVIDENCE.md + คู่มือ USER_MANUAL.md อัปเดต
+
+
+ขั้นที่ 1 — GitHub (บัญชี pitinanyo-Firn)  → Vercel deploy ให้เองอัตโนมัติ
+  1. เปิด https://github.com/pitinanyo-Firn/Billboard-Rental/tree/main/billboard-rental
+  2. กด Add file → Upload files
+  3. เปิดโฟลเดอร์ 1_GitHub_upload ในเครื่อง → เลือกทุกอย่างข้างใน (Ctrl+A) → ลากไปวางในหน้า Upload
+     (ลากทั้งโฟลเดอร์ย่อย backend / frontend / tools ได้ GitHub จะคงโครงสร้างโฟลเดอร์ให้)
+  4. Commit message: "Version 62: AI insight + API Key + attachments" → กด Commit changes
+  5. รอ 1–2 นาที แล้วเปิด https://vercel.com/firn1/billboard-rental-5igo → Deployment ล่าสุดต้องเป็น Ready
+     ตรวจ: https://billboard-rental-5igo.vercel.app/frontend/js/attach.js ต้องเปิดได้ (ไม่ใช่ 404)
+
+ขั้นที่ 2 — Apps Script (บัญชี pitinan.yo@planbmedia.co.th)
+  1. เปิด https://script.google.com/home/projects/1-6nGq5g24XJjqjqgTfWYgiQyLfzQyvVxeLUZuaBXVlqh1vG6XymqgZVS/edit
+  2. ไฟล์ Code.gs: เลือกโค้ดทั้งหมด "ตั้งแต่บรรทัดแรก จนถึงก่อนบรรทัด"
+        /* ==================== โค้ด Billboard ERP
+     แล้ววางทับด้วยเนื้อหาไฟล์ 2_AppsScript\Code.gs  (ส่วน "โค้ด Billboard ERP" ท้ายไฟล์ให้คงไว้)
+  3. ⚙️ Project Settings → ติ๊ก Show "appsscript.json" → เปิด appsscript.json → วางเนื้อหา 2_AppsScript\appsscript.json
+     (เพิ่มสิทธิ์ Google Drive สำหรับไฟล์แนบ)
+  4. กด 💾 Save
+  5. เลือกฟังก์ชัน testAIInsight → Run → กด Review permissions → เลือกบัญชี pitinan.yo@ → Allow
+     (ขอสิทธิ์ Google Drive เพิ่ม — ต้องทำครั้งเดียว)
+  6. Deploy → Manage deployments → ✏️ (deployment เดิม) → Version: New version → Deploy
+     ห้ามสร้าง deployment ใหม่ — ต้องแก้ตัวเดิม URL จะได้ไม่เปลี่ยน
+  7. เลือกฟังก์ชัน installAlertTrigger → Run  (trigger ผูกกับเวอร์ชัน ต้องติดตั้งใหม่ทุกครั้งหลัง deploy)
+
+ขั้นที่ 3 — ใส่ API Key (บนหน้าเว็บ ด้วยบัญชี admin)
+  1. เปิด https://billboard-rental-5igo.vercel.app/ → กด Ctrl+F5
+  2. มุมบนขวากด 🔑 API Key
+  3. Gemini (ฟรี): สร้างคีย์ที่ https://aistudio.google.com/apikey → วาง → 💾 บันทึก → กด ทดสอบ
+  4. (แนะนำ) Claude: สร้างที่ https://console.anthropic.com/settings/keys → ใช้ตรวจซ้ำและตรวจเอกสารได้แม่นที่สุด
+     และไม่นำข้อมูลไปเทรน (Gemini Free Tier: Google อาจนำข้อมูลไปพัฒนาโมเดล)
+
+ขั้นที่ 4 — ตรวจผล + เก็บหลักฐาน AI Literacy LV.4
+  1. Dashboard → กด ✦ วิเคราะห์ตอนนี้ → ป้ายต้องขึ้น "วิเคราะห์โดย AI ..." + แถบ "ผลตรวจคำตอบ AI"  → แคปหน้าจอ
+  2. ทะเบียนค่าเช่า → คลิกรายการ → การ์ด 📎 ไฟล์แนบ → เพิ่มรูปใบแจ้งหนี้ → ✦ AI ตรวจ → แคปหน้าจอ
+  3. Apps Script → Executions (dailyAlertCheck) → แคปหน้าจอ
+  4. Google Sheet → ชีต AI_Insights (Status = AI) และ Attachments → แคปหน้าจอ
+  5. เปิด docs\AI_Literacy_Gate_Checklist_BillboardRentalHub.xlsx (อยู่ในเครื่องที่พัฒนา) → E17, E19, E20 เปลี่ยน F เป็น P
+
+ถ้ามีปัญหา
+  - หน้าเว็บขึ้น "Apps Script ต้องอัปเดต" → ยังไม่ได้ทำขั้นที่ 2 ข้อ 6
+  - ไฟล์แนบอัปโหลดไม่ได้ / ขึ้น error เรื่องสิทธิ์ → ยังไม่ได้ Allow สิทธิ์ Drive (ขั้นที่ 2 ข้อ 5)
+  - การ์ด AI ขึ้น "สรุปตามกฎ" → ยังไม่ได้ใส่คีย์ (ขั้นที่ 3) หรือเกินโควตาฟรีของวัน
