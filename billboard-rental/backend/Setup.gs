@@ -74,11 +74,11 @@ function onOpen() {
 
 /** ลิงก์หน้าเว็บ — Script property SITE_URL หรือ URL ที่ deploy บน Vercel */
 function siteUrl_() {
-  return String(prop_('SITE_URL', '') || 'https://billboard-rental-5igo.vercel.app/')
+  return String(prop_('SITE_URL', '') || 'https://billboard-rental.vercel.app/')
     .replace(/\/+$/, '').replace(/\/frontend$/, '');
 }
 
-function menuOpenManual() { openLink_(siteUrl_() + '/frontend/manual.html', 'คู่มือการใช้งาน'); }
+function menuOpenManual() { openLink_(siteUrl_() + '/manual.html', 'คู่มือการใช้งาน'); }
 function menuOpenSite()   { openLink_(siteUrl_() + '/', 'Billboard Rental Hub'); }
 
 /** เปิดลิงก์ในแท็บใหม่จากเมนูชีต (ถ้าเบราว์เซอร์บล็อก popup ให้กดลิงก์ในหน้าต่างแทน) */
