@@ -4,8 +4,8 @@
 
 | รายการ | รายละเอียด |
 |---|---|
-| **หน้าเว็บ** | https://billboard-rental-5igo.vercel.app/ |
-| **คู่มือ (ฉบับเว็บ)** | https://billboard-rental-5igo.vercel.app/frontend/manual.html — หรือกดปุ่ม **📖 คู่มือ** มุมบนขวาของระบบ |
+| **หน้าเว็บ** | https://billboard-rental.vercel.app/ |
+| **คู่มือ (ฉบับเว็บ)** | https://billboard-rental.vercel.app/manual.html — หรือกดปุ่ม **📖 คู่มือ** มุมบนขวาของระบบ |
 | **ฐานข้อมูล** | Google Sheet *AI_Rental_Billboard_2026* (เปิดได้เฉพาะผู้ที่ได้รับสิทธิ์) |
 | **ผู้ดูแลระบบ** | Pitinan 'Firn' Yooviengchai — pitinan.yo@planbmedia.co.th |
 | **ฉบับปรับปรุง** | 10 พ.ย. 2569 · API Version 61 |
@@ -43,7 +43,7 @@
 
 ### 2.1 เข้าสู่ระบบ
 
-1. เปิด https://billboard-rental-5igo.vercel.app/
+1. เปิด https://billboard-rental.vercel.app/
 2. กรอก **Email หรือชื่อผู้ใช้** และ **Password** → กด **เข้าสู่ระบบ**
 3. ยังไม่มีบัญชีหรือลืมรหัสผ่าน → ติดต่อผู้ดูแลระบบ (admin) ให้เพิ่มบัญชีหรือรีเซ็ตรหัส
 

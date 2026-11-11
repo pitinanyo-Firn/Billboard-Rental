@@ -46,7 +46,7 @@ Billboard-Rental/
 │
 ├── tools/prepare-upload.ps1        # คัดไฟล์ไป _upload\ สำหรับอัปโหลดผ่านหน้าเว็บ GitHub
 ├── index.html                      # GitHub Pages แบบ branch/root → พาไป frontend/
-├── vercel.json                     # Vercel: "/" → /frontend/ + security headers + no-cache
+├── vercel.json                     # (โปรเจกต์ Vercel เดิม root = repo) "/" → /frontend/ · โปรเจกต์ปัจจุบันใช้ root = frontend/ + frontend/vercel.json
 ├── .gitignore · .nojekyll
 ├── README.md · FILE_STRUCTURE.md · SETUP_GUIDE.md
 ```

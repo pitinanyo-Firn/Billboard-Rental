@@ -1,4 +1,4 @@
-> **สถานะปัจจุบัน:** ติดตั้งและ deploy เรียบร้อยแล้ว — เว็บ https://billboard-rental-5igo.vercel.app/ · Apps Script Version 61 · คู่มือผู้ใช้: [`USER_MANUAL.md`](USER_MANUAL.md)
+> **สถานะปัจจุบัน:** ติดตั้งและ deploy เรียบร้อยแล้ว — เว็บ https://billboard-rental.vercel.app/ · Apps Script Version 61 · คู่มือผู้ใช้: [`USER_MANUAL.md`](USER_MANUAL.md)
 > คู่มือนี้ใช้เมื่อย้ายไปชีต/โปรเจกต์ใหม่ หรือกู้ระบบ
 
 # SETUP_GUIDE.md — ติดตั้ง Billboard Rental Hub

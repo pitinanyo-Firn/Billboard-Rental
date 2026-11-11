@@ -5,7 +5,7 @@
 | | |
 |---|---|
 | **Use Case** | ระบบติดตามค่าเช่าป้ายโฆษณา การเบิกจ่าย และ Accrued ประจำเดือน + AI วิเคราะห์ความเสี่ยงประจำวัน (Gemini ฟรี + AI ตัวที่ 2 ตรวจซ้ำ + ระบบตรวจ 5 ชั้น) |
-| **ระบบจริง** | https://billboard-rental-5igo.vercel.app/ |
+| **ระบบจริง** | https://billboard-rental.vercel.app/ |
 | **โค้ด** | GitHub `pitinanyo-Firn/Billboard-Rental` โฟลเดอร์ `billboard-rental/` |
 | **ไฟล์ประเมินตนเอง** | `docs/AI_Literacy_Gate_Checklist_BillboardRentalHub.xlsx` (เก็บในเครื่อง ไม่ขึ้น GitHub) |
 

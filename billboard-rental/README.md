@@ -2,7 +2,7 @@
 
 ระบบติดตามค่าเช่าป้ายโฆษณาและการเบิกจ่าย — Dashboard + ทะเบียนค่าเช่า + New Contract + ครบกำหนดจ่าย + บันทึกจ่าย/ใบเสร็จ + Accrued + ตรวจสอบข้อมูล + **ผู้ช่วย AI**
 
-> 📖 **คู่มือการใช้งานสำหรับผู้ใช้:** [`USER_MANUAL.md`](USER_MANUAL.md) · ฉบับเว็บ https://billboard-rental-5igo.vercel.app/frontend/manual.html
+> 📖 **คู่มือการใช้งานสำหรับผู้ใช้:** [`USER_MANUAL.md`](USER_MANUAL.md) · ฉบับเว็บ https://billboard-rental.vercel.app/manual.html
 
 โครงสร้างและดีไซน์เดียวกับ Contract Rental Hub (frontend แยกจาก backend, login, ซิงค์สองทางกับชีต) — แทนที่โค้ด "Billboard ERP" เดิมใน Apps Script
 
@@ -19,7 +19,7 @@
 
 | ส่วน | ลิงก์ |
 |---|---|
-| **หน้าเว็บ (Vercel)** | https://billboard-rental-5igo.vercel.app/ |
+| **หน้าเว็บ (Vercel)** | https://billboard-rental.vercel.app/ |
 | **Web app API** | https://script.google.com/macros/s/AKfycbyPAZq-VdvGBxH8CfoXKqDKvh8t6oLdWtTOuXFPl2VL0CZqYqQifyzjyzW7Ib5-ETXRrg/exec |
 | **Apps Script** | [Billboard Rental](https://script.google.com/home/projects/1-6nGq5g24XJjqjqgTfWYgiQyLfzQyvVxeLUZuaBXVlqh1vG6XymqgZVS/edit) · Version 61 |
 | **ผู้ดูแลระบบ** | `admin-rental` — ขอรหัสผ่านจากผู้ดูแลระบบ |
