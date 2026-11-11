@@ -30,5 +30,8 @@ foreach ($i in $items) {
   }
 }
 
+# Vercel เสิร์ฟ frontend/ เป็น root — สำเนาคู่มือไว้ข้าง manual.html (ไฟล์หลักยังเป็น USER_MANUAL.md ที่ root)
+Copy-Item (Join-Path $root 'USER_MANUAL.md') (Join-Path $out 'frontend\USER_MANUAL.md') -Force
+
 $n = (Get-ChildItem $out -Recurse -File -Force).Count
 Write-Host "Ready: $out ($n files)"
