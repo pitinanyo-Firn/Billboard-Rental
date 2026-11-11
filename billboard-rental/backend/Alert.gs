@@ -388,9 +388,13 @@ function dailyAlertCheck() {
     done.push(mon.summary);
   }
 
-  if (!done.length) return 'ไม่มีรายการต้องเตือนวันนี้';
+  // AI วิเคราะห์ความเสี่ยงประจำวัน → ชีต AI_Insights (+ อีเมลถ้ามีความเสี่ยงสูง) — AIInsight.gs บันทึก Log เอง
+  const ai = dailyAIInsight_();
+  const aiNote = ai ? ' · AI_INSIGHT ' + ai.status + (ai.emailed ? ' → ' + ai.emailed : '') : '';
+
+  if (!done.length) return 'ไม่มีรายการต้องเตือนวันนี้' + aiNote;
   writeLog_('system', 'ALERT_EMAIL', done.join(' | ') + ' → ' + to.join(','));
-  return 'ส่งแล้ว: ' + done.join(' | ') + ' → ' + to.join(', ');
+  return 'ส่งแล้ว: ' + done.join(' | ') + ' → ' + to.join(', ') + aiNote;
 }
 
 function noAdvanceEmail_() {

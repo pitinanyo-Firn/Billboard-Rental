@@ -156,7 +156,7 @@ const SYNC = {
 };
 
 /**
- * ค่า hash ของทุกเซลล์ใน Contract_Master + Payment_History + Receipt_Tracking + Accrued
+ * ค่า hash ของทุกเซลล์ใน Contract_Master + Payment_History + Receipt_Tracking + Accrued + AI_Insights + Attachments
  * เปลี่ยนเมื่อมีใครแก้ชีต (ในชีตเอง หรือผ่านหน้าเว็บ) — หน้าเว็บเรียก getVersion เป็นระยะ
  */
 function dataFingerprint_(src) {
@@ -166,7 +166,7 @@ function dataFingerprint_(src) {
   src = src || findDataSheet_();
   const ss = src.sheet.getParent();
   const parts = [src.sheet.getDataRange().getDisplayValues()];
-  [CFG.SHEET_PAYMENT, CFG.SHEET_RECEIPT, CFG.SHEET_ACCRUED].forEach(function (n) {
+  [CFG.SHEET_PAYMENT, CFG.SHEET_RECEIPT, CFG.SHEET_ACCRUED, INSIGHT.SHEET, ATTACH.SHEET].forEach(function (n) {
     const sh = ss.getSheetByName(n);
     parts.push(sh && sh.getLastRow() ? sh.getDataRange().getDisplayValues() : []);
   });

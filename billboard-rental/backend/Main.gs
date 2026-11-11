@@ -82,6 +82,16 @@ function route_(action, p) {
       case 'updateMember':     return apiUpdateMember_(p.token, p);
       case 'deleteMember':     return apiDeleteMember_(p.token, p);
       case 'askAI':            return apiAskAI_(p.token, p);
+      case 'getAIInsight':     return apiAIInsight_(p.token);
+      case 'runAIInsight':     return apiRunAIInsight_(p.token);
+      case 'getAISettings':    return apiAISettings_(p.token);
+      case 'saveAISettings':   return apiSaveAISettings_(p.token, p);
+      case 'testAIKey':        return apiTestAIKey_(p.token, p);
+      case 'getAttachments':   return apiAttachments_(p.token, p);
+      case 'uploadAttachment': return apiUploadAttachment_(p.token, p);
+      case 'getAttachment':    return apiGetAttachment_(p.token, p);
+      case 'deleteAttachment': return apiDeleteAttachment_(p.token, p);
+      case 'verifyAttachment': return apiVerifyAttachment_(p.token, p);
       default:
         return { ok: false, code: 'UNKNOWN_ACTION', message: 'ไม่รู้จักคำสั่ง: ' + action };
     }
