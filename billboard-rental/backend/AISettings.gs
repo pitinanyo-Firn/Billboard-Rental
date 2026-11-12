@@ -8,9 +8,21 @@
  */
 
 const AI_KEYS = {
-  gemini: { prop: 'GEMINI_API_KEY',    label: 'Gemini (ฟรี)', test: /^[A-Za-z0-9_\-]{20,200}$/ },
-  claude: { prop: 'ANTHROPIC_API_KEY', label: 'Claude',      test: /^[A-Za-z0-9_\-]{20,300}$/ }
+  gemini: { prop: 'GEMINI_API_KEY',    label: 'Gemini (ฟรี)', test: /^[A-Za-z0-9_\-.]{20,300}$/ },
+  claude: { prop: 'ANTHROPIC_API_KEY', label: 'Claude',      test: /^[A-Za-z0-9_\-.]{20,300}$/ }
 };
+
+/** ตัดช่องว่าง/ขึ้นบรรทัด/เครื่องหมายคำพูด/คำว่า Bearer ที่ติดมาตอนคัดลอก */
+function cleanKey_(s) {
+  return String(s || '').trim().replace(/^bearer\s+/i, '').replace(/^["'`]+|["'`]+$/g, '').replace(/\s+/g, '');
+}
+
+/** รู้เองว่าเป็นคีย์ของใครจากคำขึ้นต้น */
+function detectKeyProvider_(k) {
+  if (/^AIza/.test(k)) return 'gemini';
+  if (/^sk-ant-/.test(k)) return 'claude';
+  return '';
+}
 
 const AI_CHOICES = {
   AI_PROVIDER:     ['auto', 'gemini', 'claude'],
@@ -47,29 +59,45 @@ function apiAISettings_(token) {
 }
 
 /**
- * p: { geminiKey?, claudeKey?, clear: ['gemini'|'claude'], AI_PROVIDER?, REVIEW_PROVIDER?, DOC_AI_PROVIDER?,
+ * p: { apiKey? (ระบบรู้เองว่าเป็น Gemini/Claude), provider? (ใช้เมื่อเดาจากคำขึ้นต้นไม่ได้),
+ *      geminiKey?, claudeKey?, clear: ['gemini'|'claude'], AI_PROVIDER?, REVIEW_PROVIDER?, DOC_AI_PROVIDER?,
  *      GEMINI_MODEL?, REVIEW_MODEL? }
+ * คืน savedKey = ผู้ให้บริการของคีย์ที่บันทึก (ให้หน้าเว็บทดสอบต่อทันที)
  */
 function apiSaveAISettings_(token, p) {
   const me = authAdmin_(token);
   if (!me) return forbidden_('ตั้งค่า AI');
   const props = PropertiesService.getScriptProperties();
   const changes = [];
+  let savedKey = '';
+
+  // คีย์ที่วางมา: ช่องเดียว (apiKey) หรือช่องแยก — วางผิดช่องก็ย้ายให้ตามคำขึ้นต้น
+  const incoming = [];
+  if (cleanKey_(p.apiKey)) incoming.push({ key: cleanKey_(p.apiKey), hint: String(p.provider || '') });
+  Object.keys(AI_KEYS).forEach(function (n) { if (cleanKey_(p[n + 'Key'])) incoming.push({ key: cleanKey_(p[n + 'Key']), hint: n }); });
+  for (let i = 0; i < incoming.length; i++) {
+    const k = incoming[i].key;
+    const n = detectKeyProvider_(k) || incoming[i].hint;
+    if (!AI_KEYS[n]) {
+      return { ok: false, code: 'INVALID_VALUE',
+               message: 'ไม่รู้จักรูปแบบคีย์ — คีย์ Gemini ขึ้นต้นด้วย AIza… · คีย์ Claude ขึ้นต้นด้วย sk-ant-…' };
+    }
+    if (!AI_KEYS[n].test.test(k)) {
+      return { ok: false, code: 'INVALID_VALUE',
+               message: 'รูปแบบ API Key ของ ' + AI_KEYS[n].label + ' ไม่ถูกต้อง — คัดลอกคีย์ใหม่ทั้งหมดอีกครั้ง' };
+    }
+    props.setProperty(AI_KEYS[n].prop, k);
+    changes.push(AI_KEYS[n].label + ' = ' + keyHint_(k));
+    savedKey = n;
+  }
 
   const clear = Array.isArray(p.clear) ? p.clear : [];
-  for (const n in AI_KEYS) {
-    const val = String(p[n + 'Key'] || '').trim();
-    if (val) {
-      if (!AI_KEYS[n].test.test(val)) {
-        return { ok: false, code: 'INVALID_VALUE', message: 'รูปแบบ API Key ของ ' + AI_KEYS[n].label + ' ไม่ถูกต้อง (ห้ามมีช่องว่าง)' };
-      }
-      props.setProperty(AI_KEYS[n].prop, val);
-      changes.push(AI_KEYS[n].label + ' = ' + keyHint_(val));
-    } else if (clear.indexOf(n) > -1 && props.getProperty(AI_KEYS[n].prop)) {
+  clear.forEach(function (n) {
+    if (AI_KEYS[n] && props.getProperty(AI_KEYS[n].prop)) {
       props.deleteProperty(AI_KEYS[n].prop);
       changes.push('ลบคีย์ ' + AI_KEYS[n].label);
     }
-  }
+  });
   Object.keys(AI_CHOICES).forEach(function (k) {
     if (p[k] === undefined) return;
     const v = String(p[k]).toLowerCase();
@@ -89,7 +117,7 @@ function apiSaveAISettings_(token, p) {
   });
 
   if (changes.length) writeLog_(me.email, 'AI_SETTINGS', changes.join(' · '));
-  return Object.assign({ ok: true, changed: changes.length }, aiSettingsView_());
+  return Object.assign({ ok: true, changed: changes.length, savedKey: savedKey }, aiSettingsView_());
 }
 
 /** ทดสอบคีย์: ส่งคำขอสั้น ๆ ไปยังผู้ให้บริการ */
