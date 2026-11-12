@@ -219,6 +219,11 @@ function insightFetch_(url, headers, body) {
     try { json = JSON.parse(res.getContentText()); } catch (e) {}
     return { code: res.getResponseCode(), json: json };
   } catch (e) {
+    // สิทธิ์ script.external_request ยังไม่ได้รับอนุญาต (มักเกิดเมื่อกดอนุญาตไม่ครบทุกช่องตอน authorize)
+    if (/external_request|UrlFetchApp|permission|สิทธิ์|ไม่ได้รับอนุญาต/i.test(e.message)) {
+      return { code: 0, json: { error: { message: 'Apps Script ยังไม่ได้รับสิทธิ์เชื่อมต่อภายนอก — เจ้าของระบบเปิดชีต → เมนู ⚙️ Billboard Rental → ' +
+        '🔐 อนุญาตสิทธิ์ทั้งหมด (หรือรันฟังก์ชัน authorizeAll ใน Apps Script) แล้วติ๊กอนุญาตให้ครบทุกช่อง' } } };
+    }
     return { code: 0, json: { error: { message: 'เชื่อมต่อ AI ไม่ได้: ' + e.message } } };
   }
 }

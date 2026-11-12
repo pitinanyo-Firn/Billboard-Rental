@@ -56,6 +56,7 @@ function onOpen() {
     .createMenu('⚙️ Billboard Rental')
     .addItem('📖 คู่มือการใช้งาน', 'menuOpenManual')
     .addItem('🌐 เปิดหน้าเว็บ', 'menuOpenSite')
+    .addItem('🔐 อนุญาตสิทธิ์ทั้งหมด (AI / ไฟล์แนบ / อีเมล)', 'authorizeAll')
     .addSeparator()
     .addItem('ติดตั้งระบบครั้งแรก', 'setupSystem')
     .addItem('ล้าง Cache ข้อมูล', 'menuClearCache')
@@ -70,6 +71,32 @@ function onOpen() {
     .addItem('ส่งอีเมลทดสอบ (แจ้งเตือนล่วงหน้า)', 'testAlertEmail')
     .addItem('ส่งอีเมลทดสอบ (สรุปเดือนนี้)', 'testMonthlyEmail')
     .addToUi();
+}
+
+/**
+ * ขอสิทธิ์ทุกบริการที่ระบบใช้ในครั้งเดียว แล้วทดสอบการเชื่อมต่อ — เจ้าของระบบรันจาก editor หรือเมนูชีต
+ * (web app ทำงานด้วยสิทธิ์ของผู้ deploy — ถ้าสิทธิ์ไม่ครบ AI / ไฟล์แนบ / อีเมล จะใช้งานไม่ได้)
+ */
+function authorizeAll() {
+  const out = [];
+  out.push('✓ Google Sheet: ' + ss_().getName());
+  out.push('✓ Google Drive (โฟลเดอร์ไฟล์แนบ): ' + attachFolder_().getName());
+  out.push('✓ อีเมล: ส่งได้อีก ' + MailApp.getRemainingDailyQuota() + ' ฉบับวันนี้');
+  out.push('✓ Trigger: ' + ScriptApp.getProjectTriggers().length + ' ตัว');
+  const net = UrlFetchApp.fetch('https://www.google.com/generate_204', { muteHttpExceptions: true });
+  out.push('✓ เชื่อมต่อภายนอก: HTTP ' + net.getResponseCode());
+  Object.keys(AI_KEYS).forEach(function (n) {
+    if (!prop_(AI_KEYS[n].prop, '')) { out.push('· ' + AI_KEYS[n].label + ': ยังไม่ได้ใส่คีย์'); return; }
+    const r = n === 'gemini'
+      ? insightCallGemini_(prop_(AI_KEYS[n].prop, ''), 'ตอบเป็น JSON {"ok": true} เท่านั้น', 'ตอบเป็น JSON อย่างเดียว')
+      : insightCallClaude_(prop_(AI_KEYS[n].prop, ''), 'ตอบเป็น JSON {"ok": true} เท่านั้น', 'ตอบเป็น JSON อย่างเดียว');
+    out.push((r.ok ? '✓ ' : '✕ ') + AI_KEYS[n].label + ': ' + (r.ok ? 'ใช้งานได้ · ' + r.model : r.error));
+  });
+  const msg = out.join('\n');
+  Logger.log(msg);
+  writeLog_('system', 'AUTHORIZE_ALL', msg.replace(/\n/g, ' · ').slice(0, 450));
+  try { SpreadsheetApp.getUi().alert('อนุญาตสิทธิ์และทดสอบเรียบร้อย\n\n' + msg); } catch (e) { /* รันจาก editor ไม่มี UI ของชีต */ }
+  return msg;
 }
 
 /** ลิงก์หน้าเว็บ — Script property SITE_URL หรือ URL ที่ deploy บน Vercel */
