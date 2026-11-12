@@ -199,10 +199,22 @@ tr.att-bad td{background:#FFF7F7}
 .att-viewer-body iframe{width:100%;height:100%;border:0;background:#fff;border-radius:8px}
 
 /* ---------- 🔑 API Key ---------- */
-.ak-key{border:1px solid var(--line);border-radius:var(--r-sm);padding:12px;margin-bottom:10px;display:grid;gap:6px}
-.ak-key-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.ak-key-head .btn-sm{width:auto}
-.ak-key input{width:100%;font-family:ui-monospace,Consolas,monospace}
+.ak-form{display:grid;gap:8px}
+.ak-form .btn-primary{width:auto;justify-self:start;padding:12px 28px}
+.ak-input{display:flex;gap:6px;align-items:center}
+.ak-input input{flex:1;min-width:0;font-family:ui-monospace,Consolas,monospace;font-size:14px;padding:12px}
+.ak-secret{-webkit-text-security:disc;text-security:disc}
+.ak-type{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ak-type label{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--ink-2)}
+.ak-detect{font-size:12.5px;color:var(--muted)}
+.ak-detect.ok{color:#047857;font-weight:600}
+.ak-detect.bad{color:#B45309;font-weight:600}
+.ak-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--line)}
+.ak-row:last-child{border-bottom:0}
+.ak-row .btn-sm{width:auto}
+.ak-test-res{font-size:12px}
+.ak-test-res.ok{color:#047857;font-weight:600}
+.ak-test-res.bad{color:#B91C1C;font-weight:600}
 .ak-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
 .ak-grid label{display:grid;gap:4px;font-size:12.5px;font-weight:600;color:var(--ink-2)}
 .ak-grid select,.ak-grid input{width:100%}
