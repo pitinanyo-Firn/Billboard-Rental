@@ -55,3 +55,10 @@
 ## 4. อัปเดตโค้ดขึ้น GitHub (ไม่มี git ในเครื่อง)
 
 `powershell -ExecutionPolicy Bypass -File tools\prepare-upload.ps1` → เปิด `_upload\` → ลากทั้งหมดไปวางที่ GitHub → **Add file → Upload files** → Commit
+
+## 5. ตัวติดตั้งแอป (Windows / iOS)
+
+- ไอคอน: `powershell -ExecutionPolicy Bypass -File tools\make-icons.ps1` → `frontend\icons\`
+- ตัวติดตั้ง Windows: `powershell -ExecutionPolicy Bypass -File tools\build-installer.ps1` → `frontend\download\Billboard-Rental-Hub-Setup.iso` + `.zip` (สร้างใหม่ทุกครั้งที่แก้ `installer\windows\` หรือเปลี่ยนโดเมนเว็บ แล้ว push)
+- iPhone / iPad / Android ติดตั้งจากหน้าเว็บ (PWA) — ไม่ต้องสร้างไฟล์เพิ่ม
+- เปลี่ยน service worker แล้วให้เพิ่มเลขเวอร์ชัน `CACHE` ใน `frontend\sw.js`
