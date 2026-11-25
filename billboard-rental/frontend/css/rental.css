@@ -220,6 +220,18 @@ tr.att-bad td{background:#FFF7F7}
 .ak-grid select,.ak-grid input{width:100%}
 .ak-active{margin-top:10px;font-size:12.5px;padding:8px 10px;border-radius:var(--r-sm);background:#F5F3FF;color:#5B21B6}
 
+/* ---------- ติดตั้งแอป (PWA) ---------- */
+.login-install{width:100%;margin-top:12px;font-size:14px;font-weight:700;background:#fff;color:var(--brand,#E4002B);border:2px solid var(--brand,#E4002B)}
+.login-install:hover{background:var(--brand,#E4002B);color:#fff}
+.btn-install-top{background:var(--brand,#E4002B);color:#fff;border:1px solid var(--brand,#E4002B);font-weight:700}
+.btn-install-top:hover{filter:brightness(.92)}
+.pwa-quick{display:grid;gap:8px;margin-bottom:14px;padding:14px;border:2px dashed var(--brand,#E4002B);border-radius:var(--r-sm,10px);background:#FFF5F6}
+.pwa-quick .btn{width:100%;justify-content:center}
+.pwa-steps ol{padding-left:22px;display:grid;gap:8px;font-size:14px;line-height:1.6;color:var(--ink-2)}
+.pwa-steps .btn-sm{width:auto;display:inline-flex;margin:2px 4px}
+.pwa-ic{display:inline-block;min-width:22px;padding:0 6px;border:1px solid var(--line);border-radius:6px;text-align:center;background:#fff}
+@media (display-mode: standalone){ .btn-install{display:none !important} }
+
 .test-opts{display:grid;gap:10px}
 .member-result ul li{margin:2px 0}
 
