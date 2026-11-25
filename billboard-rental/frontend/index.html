@@ -6,6 +6,18 @@
 <meta name="description" content="ระบบติดตามค่าเช่าป้ายโฆษณาและการเบิกจ่าย — Plan B Media">
 <title>Plan B — Billboard Rental Hub</title>
 
+<!-- ติดตั้งเป็นแอป (PWA): Windows / Android / iPhone / iPad -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#E4002B">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Billboard Hub">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="application-name" content="Billboard Rental Hub">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -38,6 +50,7 @@
 
     <button id="btnLogin" class="btn btn-primary">เข้าสู่ระบบ</button>
     <div class="login-foot">สำหรับพนักงานที่ได้รับสิทธิ์เท่านั้น</div>
+    <button type="button" class="btn btn-install login-install hidden" data-pc="💻 ติดตั้งโปรแกรมบนคอมพิวเตอร์เครื่องนี้" data-mobile="📲 ติดตั้งแอปบนเครื่องนี้ (iPhone / iPad / Android)">💻 ติดตั้งโปรแกรมบนคอมพิวเตอร์เครื่องนี้</button>
   </div>
 </div>
 
@@ -53,6 +66,7 @@
     <button type="button" class="sync-pill" id="syncState" title="ซิงค์กับ Google Sheet"><i></i><span>ซิงค์กับ Google Sheet</span></button>
     <div class="spacer"></div>
     <button class="btn btn-ghost hidden" id="btnTestAlert" title="ส่งอีเมลแจ้งเตือนทดสอบ (การส่งอัตโนมัติยังทำงานตามปกติ)">🔔 ทดสอบแจ้งเตือน</button>
+    <button class="btn btn-install btn-install-top hidden" id="btnInstall" title="ติดตั้งเป็นโปรแกรมบนเครื่องนี้ (ไอคอนบน Desktop + Start Menu)" data-pc="💻 ติดตั้งบนคอมพิวเตอร์" data-mobile="📲 ติดตั้งแอป">💻 ติดตั้งบนคอมพิวเตอร์</button>
     <button class="btn btn-ghost hidden" id="btnAIKeys" title="ตั้งค่า API Key ของ AI (เฉพาะ admin)">🔑 API Key</button>
     <a class="btn btn-ghost" id="btnManual" href="manual.html" target="_blank" rel="noopener" title="คู่มือการใช้งานระบบ" style="text-decoration:none">📖 คู่มือ</a>
     <button class="btn btn-ghost" id="btnRefresh">↻ รีเฟรช</button>
@@ -761,6 +775,7 @@
 <script src="js/accrued.js"></script>
 <script src="js/attach.js"></script>
 <script src="js/aikeys.js"></script>
+<script src="js/pwa.js"></script>
 <script src="js/quality.js"></script>
 <script src="js/members.js"></script>
 <script src="js/sync.js"></script>

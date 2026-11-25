@@ -1,0 +1,23 @@
+{
+  "id": "/",
+  "name": "Billboard Rental Hub — Plan B",
+  "short_name": "Billboard Hub",
+  "description": "ระบบติดตามค่าเช่าป้ายโฆษณา การเบิกจ่าย และ Accrued — Plan B Media",
+  "lang": "th",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "orientation": "any",
+  "background_color": "#F1F5F9",
+  "theme_color": "#E4002B",
+  "categories": ["business", "finance", "productivity"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "คู่มือการใช้งาน", "url": "/manual.html", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}
